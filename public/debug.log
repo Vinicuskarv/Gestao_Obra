@@ -1,0 +1,54 @@
+POST recebido: Array
+(
+    [name] => tet
+)
+
+Tentando conectar...
+POST recebido: Array
+(
+    [name] => tet
+)
+
+Tentando conectar...
+POST recebido: Array
+(
+    [name] => sdsd
+)
+
+Tentando conectar...
+POST recebido: Array
+(
+    [name] => vinicius Karv
+)
+
+Tentando conectar...
+Conectou ao banco!
+Execução: OK
+Obra inserida ID=1 Nome=vinicius Karv
+POST recebido: Array
+(
+    [name] => sss
+)
+
+Tentando conectar...
+Conectou ao banco!
+Execução: OK
+Obra inserida ID=2 Nome=sss
+POST recebido: Array
+(
+    [name] => SSS
+)
+
+Tentando conectar...
+Conectou ao banco!
+Execução: OK
+Obra inserida ID=3 Nome=SSS
+POST recebido: Array
+(
+    [name] => dddddddfd
+)
+
+Tentando conectar...
+Conectou ao banco!
+Execução: OK
+Obra inserida ID=4 Nome=dddddddfd

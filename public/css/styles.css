@@ -1,0 +1,114 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+}
+
+header {
+    color: #ffffff;
+    text-align: center;
+}
+
+footer {
+    background: #35424a;
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 0;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+form {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+input[type="submit"] {
+    background: #35424a;
+    color: #ffffff;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background: #45a049;
+}
+.menu {
+    background-color: #535353b2;
+    overflow: hidden;
+    padding: 8px;
+    margin: 10px;
+    border-radius: 40px;
+}
+.menu .btn_criar{
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border: none;
+    border-radius: 20px;
+}
+.badge {
+    font-size: 14px;
+    background-color: #e4e4e4;
+    color: rgb(0, 0, 0);
+}
+.bg-secondary {
+    background-color: #6c757d;
+    color: white !important;
+    padding: 5px 10px;
+    border-radius: 12px;
+}
+.bg-success {
+    background-color: #28a745;
+    color: white !important;
+    padding: 5px 10px;
+    border-radius: 12px;
+}
+.bg-warning {
+    background-color: #ffc107;
+    color: black;
+    padding: 5px 10px;
+    border-radius: 12px;
+}
+.badge-inativo {
+    background-color: #dc3545;
+    color: white !important;
+    padding: 5px 10px;
+    border-radius: 12px;
+}
+.badge-pendente {
+    background-color: #ffc107;
+    color: black;
+    padding: 5px 10px;
+    border-radius: 12px;
+}
+.table-responsive {
+    margin-top: 20px;
+}

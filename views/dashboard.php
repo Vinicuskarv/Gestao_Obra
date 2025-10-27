@@ -188,6 +188,24 @@
   </div>
 </div>
 
+<!-- Modal de confirmação de exclusão (reutilizável) -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteTitle">Confirmar exclusão</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmDeleteMessage">Tem certeza que deseja excluir?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button id="confirmDeleteBtn" type="button" class="btn btn-danger">Excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -225,7 +243,10 @@ document.addEventListener('DOMContentLoaded', function() {
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
         li.dataset.id = o.id;
         li.innerHTML = '<span class="obra-name">'+escapeHtml(o.name)+'</span>' +
-          '<div><button class="btn btn-sm btn-outline-secondary btn-editar-obra" data-id="'+o.id+'" data-name="'+escapeAttr(o.name)+'">Editar</button></div>';
+          '<div>' +
+            '<button class="btn btn-sm btn-outline-secondary btn-editar-obra me-2" data-id="'+o.id+'" data-name="'+escapeAttr(o.name)+'">Editar</button>' +
+            '<button class="btn btn-sm btn-outline-danger btn-delete-obra" data-id="'+o.id+'" data-name="'+escapeAttr(o.name)+'">Excluir</button>' +
+          '</div>';
         listaObras.appendChild(li);
 
         const opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.name;
@@ -246,6 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) { console.error(e); }
   }
 
+  // Ajuste renderers para incluir botão Excluir
   function renderFuncionarioItem(f) {
     const li = document.createElement('li');
     li.className = 'list-group-item';
@@ -254,7 +276,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const header = document.createElement('div'); header.className = 'd-flex justify-content-between';
     const title = document.createElement('div'); title.className = 'fw-bold'; title.textContent = f.name;
     const actions = document.createElement('div');
-    actions.innerHTML = '<button class="btn btn-sm btn-outline-primary btn-editar-func" data-id="'+f.id+'">Editar</button>';
+    actions.innerHTML = '<button class="btn btn-sm btn-outline-primary btn-editar-func me-2" data-id="'+f.id+'">Editar</button>' +
+                        '<button class="btn btn-sm btn-outline-danger btn-delete-func" data-id="'+f.id+'" data-name="'+escapeAttr(f.name)+'">Excluir</button>';
     header.appendChild(title); header.appendChild(actions);
 
     const meta = document.createElement('div'); meta.className = 'small text-muted';
@@ -265,7 +288,6 @@ document.addEventListener('DOMContentLoaded', function() {
       f.obras.forEach(o => {
         const span = document.createElement('span');
         span.className = 'badge me-1';
-        // status badge inserted
         span.innerHTML = escapeHtml(o.name) + ' ' + (o.status ? ('<span class="badge '+ (o.status==='ativo' ? 'bg-success' : (o.status==='suspenso' ? 'bg-warning text-dark' : 'bg-secondary')) +' ms-1">'+escapeHtml(o.status)+'</span>') : '');
         obrasWrap.appendChild(span);
       });
@@ -278,6 +300,77 @@ document.addEventListener('DOMContentLoaded', function() {
     li.appendChild(obrasWrap);
     return li;
   }
+
+  // Confirm delete modal logic
+  let pendingDelete = null; // { type: 'obra'|'func', id, name }
+
+  function openConfirmDelete(type, id, name) {
+    pendingDelete = { type, id, name };
+    document.getElementById('confirmDeleteTitle').textContent = 'Confirmar exclusão';
+    document.getElementById('confirmDeleteMessage').textContent = 'Tem certeza que deseja excluir "' + name + '"? Esta ação não pode ser desfeita.';
+    const modalEl = document.getElementById('confirmDeleteModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+    if (!pendingDelete) return;
+    const { type, id } = pendingDelete;
+    const endpoint = (type === 'obra') ? 'delete_obra.php' : 'delete_funcionario.php';
+    try {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        if (type === 'obra') {
+          // remove obra list item and options
+          const li = listaObras.querySelector('li[data-id="'+id+'"]');
+          if (li) li.remove();
+          // remove from selects
+          [funcObraSelect, editarObraSelect].forEach(sel => {
+            const opt = sel.querySelector('option[value="'+id+'"]');
+            if (opt) opt.remove();
+          });
+          // reload funcionarios to remove badges referencing the obra
+          await carregarFuncionarios();
+        } else {
+          const li = listaFuncs.querySelector('li[data-id="'+id+'"]');
+          if (li) li.remove();
+        }
+      } else {
+        console.error('Erro ao excluir:', data.error || data);
+      }
+    } catch (err) {
+      console.error('Erro de conexão:', err);
+    } finally {
+      const modalEl = document.getElementById('confirmDeleteModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+      pendingDelete = null;
+    }
+  });
+
+  // Delegation: abrir confirmação ao clicar em excluir
+  listaObras.addEventListener('click', function(e) {
+    const btnDel = e.target.closest('.btn-delete-obra');
+    if (btnDel) {
+      openConfirmDelete('obra', btnDel.dataset.id, btnDel.dataset.name || btnDel.getAttribute('data-name') || '');
+      return;
+    }
+    // existing edit handler...
+  });
+
+  listaFuncs.addEventListener('click', function(e) {
+    const btnDel = e.target.closest('.btn-delete-func');
+    if (btnDel) {
+      openConfirmDelete('func', btnDel.dataset.id, btnDel.dataset.name || btnDel.getAttribute('data-name') || '');
+      return;
+    }
+    // existing edit handler...
+  });
 
   // ouvir editar funcionário
   listaFuncs.addEventListener('click', function(e) {
@@ -393,6 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // criar/editar obra handlers (assume create_obra.php & update_obra.php existem)
   const formNovaObra = document.getElementById('formNovaObra');
   if (formNovaObra) formNovaObra.addEventListener('submit', async function(e){
+    console.log('Submitting new obra form');
     e.preventDefault();
     const name = document.getElementById('obraName').value.trim();
     if (!name) return;
@@ -430,6 +524,3 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-<?php
-// ...existing code...
-?>

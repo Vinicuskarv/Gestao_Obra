@@ -1,0 +1,6 @@
+# Reescreve requisições /token/... para token.php
+RewriteEngine On
+RewriteBase /
+
+# envia qualquer URL começando por token/ para token.php
+RewriteRule ^token(/.*)?$ token.php [L,QSA]

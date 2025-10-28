@@ -25,8 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Login</title>
     <style>
         .login-container{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
             max-width: 400px;
-            margin: 50px auto;
             padding: 20px;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -37,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-bottom: 20px;
         }
         .login-container input{
-            width: 100%;
+            width: auto;
             padding: 10px;
             margin: 10px 0;
             border: 1px solid #ccc;
@@ -63,7 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .login-container form{
             display: flex;
             flex-direction: column;
-            background: #ffffff;
+            background: #f9f9f9;
+            box-shadow: none !important;
         }
     </style>
 </head>

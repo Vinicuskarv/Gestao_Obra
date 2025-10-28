@@ -25,10 +25,10 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
     $sql = "SELECT f.id, f.name, f.email, f.phone,
-                   GROUP_CONCAT(CONCAT(o.id, '::', REPLACE(o.name, '::', ''), '::', COALESCE(ofp.status, 'ativo')) SEPARATOR '||') AS obras
+                   GROUP_CONCAT(CONCAT(o.token, '::', REPLACE(o.name, '::', ''), '::', COALESCE(ofp.status, 'ativo')) SEPARATOR '||') AS obras
             FROM funcionarios f
             LEFT JOIN obra_funcionario ofp ON ofp.funcionario_id = f.id
-            LEFT JOIN obras o ON o.id = ofp.obra_id
+            LEFT JOIN obras o ON o.token = ofp.obra_id
             GROUP BY f.id
             ORDER BY f.created_at DESC";
     $stmt = $conn->query($sql);

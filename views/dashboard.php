@@ -1,5 +1,6 @@
 <?php
 // ...existing code...
+require_once __DIR__ . '/../config.php';
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -212,11 +213,19 @@ document.addEventListener('DOMContentLoaded', function() {
   const listaObras = document.getElementById('lista-obras');
   const listaFuncs = document.getElementById('lista-funcionarios');
 
+  // token da empresa disponível no JS (vindo do config.php)
+  const COMPANY_TOKEN = <?= json_encode(defined('COMPANY_TOKEN') ? COMPANY_TOKEN : '') ?>;
+
   // selects/forms (assume modals include these IDs)
   const funcObraSelect = document.getElementById('funcObraSelect');
   const funcAssocStatus = document.getElementById('funcAssocStatus'); // novo
   const editarObraSelect = document.getElementById('editarFuncObraSelect');
   const editarAssocStatus = document.getElementById('editarFuncAssocStatus'); // novo in edit modal
+
+  function tokenUrlFor(obraId) {
+    if (!COMPANY_TOKEN) return '';
+    return location.origin + '/token/' + encodeURIComponent(COMPANY_TOKEN) + '/obra/' + encodeURIComponent(obraId);
+  }
 
   function statusBadge(status) {
     if (!status) return '<span class="badge bg-secondary">sem status</span>';
@@ -241,15 +250,25 @@ document.addEventListener('DOMContentLoaded', function() {
       data.obras.forEach(o => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.dataset.id = o.id;
+        li.dataset.token = o.token;
+
+        // botão/ link público para marcação (se COMPANY_TOKEN estiver configurado)
+        let publicLinkHtml = '';
+        if (COMPANY_TOKEN) {
+          const url = tokenUrlFor(o.token);
+          publicLinkHtml = '<a class="btn btn-sm btn-outline-info btn-link-obra me-2" href="' + escapeAttr(url) + '" target="_blank" title="Abrir link público">Abrir Link</a>' +
+                           '<button class="btn btn-sm btn-outline-secondary btn-copy-link" data-url="' + escapeAttr(url) + '" title="Copiar link">Copiar</button>';
+        }
+
         li.innerHTML = '<span class="obra-name">'+escapeHtml(o.name)+'</span>' +
           '<div>' +
-            '<button class="btn btn-sm btn-outline-secondary btn-editar-obra me-2" data-id="'+o.id+'" data-name="'+escapeAttr(o.name)+'">Editar</button>' +
-            '<button class="btn btn-sm btn-outline-danger btn-delete-obra" data-id="'+o.id+'" data-name="'+escapeAttr(o.name)+'">Excluir</button>' +
+            publicLinkHtml +
+            '<button class="btn btn-sm btn-outline-secondary btn-editar-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Editar</button>' +
+            '<button class="btn btn-sm btn-outline-danger btn-delete-obra" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Excluir</button>' +
           '</div>';
         listaObras.appendChild(li);
 
-        const opt = document.createElement('option'); opt.value = o.id; opt.textContent = o.name;
+        const opt = document.createElement('option'); opt.value = o.token; opt.textContent = o.name;
         funcObraSelect.appendChild(opt);
         editarObraSelect.appendChild(opt.cloneNode(true));
       });
@@ -353,11 +372,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Delegation: abrir confirmação ao clicar em excluir
+  // Delegation: abrir confirmação ao clicar em excluir ou copiar link
   listaObras.addEventListener('click', function(e) {
     const btnDel = e.target.closest('.btn-delete-obra');
     if (btnDel) {
       openConfirmDelete('obra', btnDel.dataset.id, btnDel.dataset.name || btnDel.getAttribute('data-name') || '');
+      return;
+    }
+    const btnCopy = e.target.closest('.btn-copy-link');
+    if (btnCopy) {
+      const url = btnCopy.getAttribute('data-url') || '';
+      if (navigator.clipboard && url) {
+        navigator.clipboard.writeText(url).then(() => {
+          // feedback mínimo
+          btnCopy.textContent = 'Copiado';
+          setTimeout(() => btnCopy.textContent = 'Copiar', 1500);
+        }).catch(() => {
+          prompt('Copie o link abaixo:', url);
+        });
+      } else if (url) {
+        prompt('Copie o link abaixo:', url);
+      }
       return;
     }
     // existing edit handler...

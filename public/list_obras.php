@@ -11,10 +11,11 @@ try {
     $conn->exec("CREATE TABLE IF NOT EXISTS obras (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
+        token VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-    $stmt = $conn->query('SELECT id, name FROM obras ORDER BY created_at DESC');
+    $stmt = $conn->query('SELECT id, name, token FROM obras ORDER BY created_at DESC');
     $obras = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode(['success' => true, 'obras' => $obras], JSON_UNESCAPED_UNICODE);

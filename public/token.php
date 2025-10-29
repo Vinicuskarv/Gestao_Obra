@@ -65,14 +65,14 @@ try {
 
     <form method="post" action="/mark_ponto.php" style="display:inline-block; margin-right:8px;">
         <input type="hidden" name="token" value="<?= htmlspecialchars(COMPANY_TOKEN, ENT_QUOTES, 'UTF-8') ?>">
-        <input type="hidden" name="obra" value="<?= (int)$obra['id'] ?>">
+        <input type="hidden" name="obra" value="<?= $obra['token'] ?>">
         <input type="hidden" name="type" value="entrada">
         <button class="btn btn-success" type="submit">Marcar Entrada</button>
     </form>
 
     <form method="post" action="/mark_ponto.php" style="display:inline-block; margin-right:8px;">
         <input type="hidden" name="token" value="<?= htmlspecialchars(COMPANY_TOKEN, ENT_QUOTES, 'UTF-8') ?>">
-        <input type="hidden" name="obra" value="<?= (int)$obra['id'] ?>">
+        <input type="hidden" name="obra" value="<?= $obra['token'] ?>">
         <input type="hidden" name="type" value="saida">
         <button class="btn btn-danger" type="submit">Marcar Saída</button>
     </form>

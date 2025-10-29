@@ -1,8 +1,9 @@
 <?php
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '../../config.php';
+require_once __DIR__ . '../../src/Database.php';
 
 $token = isset($_GET['token']) ? trim($_GET['token']) : '';
-$obraId = isset($_GET['obra']) ? intval($_GET['obra']) : 0;
+$obraId = isset($_GET['obra']) ? trim($_GET['obra']) : 0;
 
 if (!$token || !$obraId || $token !== COMPANY_TOKEN) {
     http_response_code(403);
@@ -14,7 +15,7 @@ if (!$token || !$obraId || $token !== COMPANY_TOKEN) {
 $obra = null;
 try {
     $db = getDb();
-    $stmt = $db->prepare('SELECT token, name FROM obras WHERE id = ? LIMIT 1');
+    $stmt = $db->prepare('SELECT token, name FROM obras WHERE token = ? ');
     $stmt->execute([$obraId]);
     $obra = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
@@ -27,6 +28,8 @@ $obraName = $obra ? htmlspecialchars($obra['name']) : 'Obra #' . $obraId;
 <html lang="pt-BR">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Marcar Ponto - <?= $obraName ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
 </head>
 <body class="p-4">
 <div class="container">
@@ -39,5 +42,7 @@ $obraName = $obra ? htmlspecialchars($obra['name']) : 'Obra #' . $obraId;
     <button name="type" value="saida" class="btn btn-danger">Marcar Saída</button>
   </form>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

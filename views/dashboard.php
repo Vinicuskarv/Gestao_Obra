@@ -257,12 +257,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (COMPANY_TOKEN) {
           const url = tokenUrlFor(o.token);
           publicLinkHtml = '<a class="btn btn-sm btn-outline-info btn-link-obra me-2" href="' + escapeAttr(url) + '" target="_blank" title="Abrir link público">Abrir Link</a>' +
-                           '<button class="btn btn-sm btn-outline-secondary btn-copy-link" data-url="' + escapeAttr(url) + '" title="Copiar link">Copiar</button>';
+                           '<button class="btn btn-sm btn-outline-secondary btn-copy-link me-2" data-url="' + escapeAttr(url) + '" title="Copiar link">Copiar</button>';
         }
 
         li.innerHTML = '<span class="obra-name">'+escapeHtml(o.name)+'</span>' +
           '<div>' +
             publicLinkHtml +
+            '<button class="btn btn-sm btn-outline-primary btn-detalhes-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Detalhes</button>' +
             '<button class="btn btn-sm btn-outline-secondary btn-editar-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Editar</button>' +
             '<button class="btn btn-sm btn-outline-danger btn-delete-obra" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Excluir</button>' +
           '</div>';
@@ -384,7 +385,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const url = btnCopy.getAttribute('data-url') || '';
       if (navigator.clipboard && url) {
         navigator.clipboard.writeText(url).then(() => {
-          // feedback mínimo
           btnCopy.textContent = 'Copiado';
           setTimeout(() => btnCopy.textContent = 'Copiar', 1500);
         }).catch(() => {
@@ -395,6 +395,22 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       return;
     }
+
+    // novo: abrir página de detalhes/horários da obra
+    const btnDetalhes = e.target.closest('.btn-detalhes-obra');
+    if (btnDetalhes) {
+      const obraToken = btnDetalhes.dataset.id || btnDetalhes.getAttribute('data-id');
+      if (!obraToken) return;
+
+      const url = '/project_hours.php?obra_token=' + encodeURIComponent(obraToken);
+
+      // Redirecionar na mesma aba:
+      window.location.href = url;
+
+      return;
+    }
+
+
     // existing edit handler...
   });
 

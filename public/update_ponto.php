@@ -11,10 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $token = isset($_POST['token']) ? trim($_POST['token']) : '';
 $obraId = isset($_POST['obra']) ? intval($_POST['obra']) : 0;
 $type = isset($_POST['type']) ? trim($_POST['type']) : '';
-$horaClient = isset($_POST['hora']) ? trim($_POST['hora']) : '';
+$hora = isset($_POST['hora']) ? trim($_POST['hora']) : '';
 
-// valida
-if (!$token || $token !== COMPANY_TOKEN || !$obraId || !$type) {
+if (!$token || $token !== COMPANY_TOKEN || !$obraId || !$type || !$hora) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Parâmetros inválidos.']);
     exit;
@@ -24,21 +23,36 @@ try {
     $db = new Database();
     $conn = $db->getConnection();
 
-    // mapeia tipos para enum de banco (ajuste se necessário)
+    // mapeia tipos para enum de banco
     $tipoMap = [
         'entrada' => 'entrada',
-        'entradaAlmoco' => 'pausa_inicio',
-        'saidaAlmoco' => 'pausa_fim',
+        'pausa_inicio' => 'pausa_inicio',
+        'pausa_fim' => 'pausa_fim',
         'saida' => 'saida'
     ];
     $tipoDb = $tipoMap[$type] ?? $type;
 
-    // insere evento: usa hora do servidor (UTC_TIMESTAMP) em vez de hora do cliente
-    $stmt = $conn->prepare('INSERT INTO pontos (obra_id, tipo, ocorrido_at) VALUES (:obra, :tipo, UTC_TIMESTAMP(6))');
-    $stmt->execute([':obra' => $obraId, ':tipo' => $tipoDb]);
+    // concatena data de hoje com a hora enviada
+    $dataHora = date('Y-m-d') . ' ' . $hora;
+
+    // atualiza o ponto mais recente do dia deste tipo
+    $stmt = $conn->prepare('
+        UPDATE pontos 
+        SET ocorrido_at = :dataHora
+        WHERE obra_id = :obra 
+          AND tipo = :tipo 
+          AND DATE(ocorrido_at) = CURDATE()
+        ORDER BY ocorrido_at DESC
+        LIMIT 1
+    ');
+    $stmt->execute([
+        ':obra' => $obraId,
+        ':tipo' => $tipoDb,
+        ':dataHora' => $dataHora
+    ]);
 
     http_response_code(200);
-    echo json_encode(['success' => true, 'hora' => $horaClient]);
+    echo json_encode(['success' => true]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

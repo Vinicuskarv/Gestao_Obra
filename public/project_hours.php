@@ -69,13 +69,13 @@ function sec2hms($sec) {
 </head>
 <body class="p-4">
     <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center ">
         <h3>Obra: <?= htmlspecialchars($obra['name'], ENT_QUOTES, 'UTF-8') ?></h3>
         <a href="/dashboard.php" class="btn btn-sm btn-secondary">Voltar</a>
     </div>
     <?php foreach ($byDate as $date => $events): ?>
-    <div class="card mb-3">
-        <a data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+    <div class="card">
+        <a data-bs-toggle="collapse" href="#collapseExample<?= date('d/m/Y', strtotime($date)) ?>" role="button" aria-expanded="false" aria-controls="collapseExample" style="text-decoration: none; color: inherit;">
             <div class="card-header d-flex justify-content-between">
             <div>
                 <strong><?= date('d/m/Y', strtotime($date)) ?></strong>
@@ -117,7 +117,7 @@ function sec2hms($sec) {
             </div>
             </div>
         </a>
-        <div class="collapse" id="collapseExample">
+        <div class="collapse" id="collapseExample<?= date('d/m/Y', strtotime($date)) ?>">
             <div class="card-body p-0">
             <ul class="list-group list-group-flush">
                 <?php foreach ($events as $ev): ?>

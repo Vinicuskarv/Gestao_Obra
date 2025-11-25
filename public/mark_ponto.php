@@ -8,10 +8,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$token = isset($_POST['token']) ? trim($_POST['token']) : '';
-$obraId = isset($_POST['obra']) ? intval($_POST['obra']) : 0;
-$type = isset($_POST['type']) ? trim($_POST['type']) : '';
-$horaClient = isset($_POST['hora']) ? trim($_POST['hora']) : '';
+session_start();
+
+// ID real do funcionário (único válido)
+$funcionario_id = $_SESSION['funcionario_id'] ?? null;
+
+if (!$funcionario_id) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Funcionário não autenticado']);
+    exit;
+}
+
+$token = trim($_POST['token'] ?? '');
+$obraId = intval($_POST['obra'] ?? 0);
+$type = trim($_POST['type'] ?? '');
+$horaClient = trim($_POST['hora'] ?? '');
 
 // valida
 if (!$token || $token !== COMPANY_TOKEN || !$obraId || !$type) {
@@ -24,20 +35,26 @@ try {
     $db = new Database();
     $conn = $db->getConnection();
 
-    // mapeia tipos para enum de banco (ajuste se necessário)
     $tipoMap = [
-        'entrada' => 'entrada',
-        'entradaAlmoco' => 'pausa_inicio',
-        'saidaAlmoco' => 'pausa_fim',
-        'saida' => 'saida'
+        'entrada'        => 'entrada',
+        'entradaAlmoco'  => 'pausa_inicio',
+        'saidaAlmoco'    => 'pausa_fim',
+        'saida'          => 'saida',
     ];
     $tipoDb = $tipoMap[$type] ?? $type;
 
-    // insere evento: usa hora do servidor (UTC_TIMESTAMP) em vez de hora do cliente
-    $stmt = $conn->prepare('INSERT INTO pontos (obra_id, tipo, ocorrido_at) VALUES (:obra, :tipo, UTC_TIMESTAMP(6))');
-    $stmt->execute([':obra' => $obraId, ':tipo' => $tipoDb]);
+    // Query corrigida
+    $stmt = $conn->prepare('
+        INSERT INTO pontos (obra_id, tipo, ocorrido_at, funcionario_id)
+        VALUES (:obra, :tipo, UTC_TIMESTAMP(6), :funcionario)
+    ');
 
-    http_response_code(200);
+    $stmt->execute([
+        ':obra'        => $obraId,
+        ':tipo'        => $tipoDb,
+        ':funcionario' => $funcionario_id
+    ]);
+
     echo json_encode(['success' => true, 'hora' => $horaClient]);
 } catch (Exception $e) {
     http_response_code(500);

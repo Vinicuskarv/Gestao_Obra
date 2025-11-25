@@ -11,6 +11,19 @@ if (!preg_match('#^/token/([^/]+)/obra/([^/]+)/?$#', $path, $m)) {
 $companyToken = $m[1];
 $obraToken = $m[2];
 
+session_start();
+$_SESSION['companyToken'] = $companyToken;
+$_SESSION['obraToken'] = $obraToken;
+
+
+if (!isset($_SESSION['funcionario_id'])) {
+    header("Location: /login_funcionario.php?company=" . $obraToken . "&obra=" . $companyToken);
+    exit;
+}
+
+
+$funcionario_id = $_SESSION['funcionario_id'];
+
 if (!defined('COMPANY_TOKEN') || $companyToken !== COMPANY_TOKEN) {
     http_response_code(403);
     echo "Acesso negado (empresa).";
@@ -260,7 +273,8 @@ $tiposDisponiveis = ['entrada', 'pausa_inicio', 'pausa_fim', 'saida'];
                             token: formPonto.elements['token'].value,
                             obra: formPonto.elements['obra'].value,
                             type: type,
-                            hora: hora
+                            hora: hora,
+                            funcionario: <?= json_encode($funcionario_id) ?>
                         })
                     });
 
@@ -307,7 +321,8 @@ $tiposDisponiveis = ['entrada', 'pausa_inicio', 'pausa_fim', 'saida'];
                         token: formPonto.elements['token'].value,
                         obra: formPonto.elements['obra'].value,
                         type: tipoEmEdicao,
-                        hora: novaHora + ':00'
+                        hora: novaHora + ':00',
+                        funcionario: <?= json_encode($funcionario_id) ?>
                     })
                 });
 

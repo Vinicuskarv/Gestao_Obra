@@ -2,7 +2,15 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../src/Database.php';
 
+
 $obraToken = trim($_GET['obra_token'] ?? '');
+
+$mes = $_GET['mes'] ?? date('Y-m'); // formato YYYY-MM — padrão = mês atual
+
+// Início e fim do mês selecionado
+$inicioMes = $mes . '-01 00:00:00';
+$fimMes = date('Y-m-t 23:59:59', strtotime($inicioMes));
+
 if ($obraToken === '') {
     http_response_code(400);
     echo "Token da obra não informado.";
@@ -26,9 +34,14 @@ try {
         SELECT tipo, ocorrido_at
         FROM pontos
         WHERE obra_id = :obra
+        AND ocorrido_at BETWEEN :ini AND :fim
         ORDER BY ocorrido_at ASC
     ');
-    $stmt->execute([':obra' => (int)$obra['id']]);
+    $stmt->execute([
+        ':obra' => (int)$obra['id'],
+        ':ini' => $inicioMes,
+        ':fim' => $fimMes
+    ]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Agrupa por data
@@ -68,23 +81,14 @@ function sec2hms($sec) {
 
 </head>
 <body class="p-4">
+    
     <div class="container">
-    <div class="d-flex justify-content-between align-items-center ">
-        <h3>Obra: <?= htmlspecialchars($obra['name'], ENT_QUOTES, 'UTF-8') ?></h3>
-        <a href="/dashboard.php" class="btn btn-sm btn-secondary">Voltar</a>
-    </div>
-    <?php foreach ($byDate as $date => $events): ?>
-    <div class="card">
-        <a data-bs-toggle="collapse" href="#collapseExample<?= date('d/m/Y', strtotime($date)) ?>" role="button" aria-expanded="false" aria-controls="collapseExample" style="text-decoration: none; color: inherit;">
-            <div class="card-header d-flex justify-content-between">
-            <div>
-                <strong><?= date('d/m/Y', strtotime($date)) ?></strong>
-            </div>
+                <?php
+        // Cálculo total do mês
+            $workMonth = 0;
+            $breakMonth = 0;
 
-            <?php
-                // calcula resumo diário
-                $workSeconds = 0;
-                $breakSeconds = 0;
+            foreach ($byDate as $date => $events) {
                 $openEntry = null;
                 $openBreak = null;
 
@@ -95,26 +99,81 @@ function sec2hms($sec) {
                         $openEntry = $ts;
 
                     } elseif ($ev['tipo'] === 'saida' && $openEntry !== null) {
-                        $workSeconds += max(0, $ts - $openEntry);
+                        $workMonth += max(0, $ts - $openEntry);
                         $openEntry = null;
 
                     } elseif ($ev['tipo'] === 'pausa_inicio') {
                         $openBreak = $ts;
 
                     } elseif ($ev['tipo'] === 'pausa_fim' && $openBreak !== null) {
-                        $breakSeconds += max(0, $ts - $openBreak);
+                        $breakMonth += max(0, $ts - $openBreak);
                         $openBreak = null;
                     }
                 }
+            }
 
-                $netSeconds = max(0, $workSeconds - $breakSeconds);
-            ?>
+            $netMonth = max(0, $workMonth - $breakMonth);
+        ?>
+        <div class="mb-4 p-3 border rounded bg-light">
+            <form method="get">
+                <input type="hidden" name="obra_token" value="<?= htmlspecialchars($obraToken) ?>">
 
-            <div class="text-end">
-                <small class="text-muted">Total bruto: <?= sec2hms($workSeconds) ?></small><br>
-                <small class="text-muted">Pausa: <?= sec2hms($breakSeconds) ?></small><br>
-                <strong>Liquido: <?= sec2hms($netSeconds) ?></strong>
-            </div>
+                <label class="form-label">Selecionar mês:</label>
+                <input type="month" name="mes" value="<?= htmlspecialchars($mes) ?>" class="form-control" onchange="this.form.submit()">
+
+                <div class="mt-3">
+                    <strong>Horas do mês:</strong><br>
+                    <small class="text-muted">Total bruto: <?= sec2hms($workMonth) ?></small><br>
+                    <small class="text-muted">Pausas: <?= sec2hms($breakMonth) ?></small><br>
+                    <h4>Líquido: <?= sec2hms($netMonth) ?></h4>
+                </div>
+            </form>
+        </div>
+
+    <div class="d-flex justify-content-between align-items-center ">
+
+        <h3>Obra: <?= htmlspecialchars($obra['name'], ENT_QUOTES, 'UTF-8') ?></h3>
+        <a href="/dashboard.php" class="btn btn-sm btn-secondary">Voltar</a>
+    </div>
+    <?php foreach ($byDate as $date => $events): ?>
+    <div class="card">
+        <a data-bs-toggle="collapse" href="#collapseExample<?= date('d/m/Y', strtotime($date)) ?>" role="button" aria-expanded="false" aria-controls="collapseExample" style="text-decoration: none; color: inherit;">
+            <div class="card-header d-flex justify-content-between">
+                <div>
+                    <strong><?= date('d/m/Y', strtotime($date)) ?></strong>
+                </div>
+                <?php
+                    $workSeconds = 0;
+                    $breakSeconds = 0;
+                    $openEntry = null;
+                    $openBreak = null;
+
+                    foreach ($events as $ev) {
+                        $ts = strtotime($ev['ocorrido_at']);
+
+                        if ($ev['tipo'] === 'entrada') {
+                            $openEntry = $ts;
+
+                        } elseif ($ev['tipo'] === 'saida' && $openEntry !== null) {
+                            $workSeconds += max(0, $ts - $openEntry);
+                            $openEntry = null;
+
+                        } elseif ($ev['tipo'] === 'pausa_inicio') {
+                            $openBreak = $ts;
+
+                        } elseif ($ev['tipo'] === 'pausa_fim' && $openBreak !== null) {
+                            $breakSeconds += max(0, $ts - $openBreak);
+                            $openBreak = null;
+                        }
+                    }
+
+                    $netSeconds = max(0, $workSeconds - $breakSeconds);
+                ?>
+                <div class="text-end">
+                    <small class="text-muted">Total bruto: <?= sec2hms($workSeconds) ?></small><br>
+                    <small class="text-muted">Pausa: <?= sec2hms($breakSeconds) ?></small><br>
+                    <strong>Liquido: <?= sec2hms($netSeconds) ?></strong>
+                </div>
             </div>
         </a>
         <div class="collapse" id="collapseExample<?= date('d/m/Y', strtotime($date)) ?>">
@@ -133,11 +192,7 @@ function sec2hms($sec) {
             </div>
         </div>
     <?php endforeach; ?>
-
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
-
 </html>
-

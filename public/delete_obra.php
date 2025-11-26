@@ -3,10 +3,13 @@ header('Content-Type: application/json; charset=utf-8');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Método inválido']); exit;
 }
+
 $id = $_POST['id'] ?? '';
-if (!is_numeric($id)) {
+
+if (!$id) {
     echo json_encode(['success' => false, 'error' => 'ID inválido']); exit;
 }
+
 require_once __DIR__ . '../../src/Database.php';
 try {
     $db = new Database();

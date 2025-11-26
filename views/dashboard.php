@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
             publicLinkHtml +
             '<button class="btn btn-sm btn-outline-primary btn-detalhes-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Detalhes</button>' +
             '<button class="btn btn-sm btn-outline-secondary btn-editar-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Editar</button>' +
-            '<button class="btn btn-sm btn-outline-danger btn-delete-obra" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Excluir</button>' +
+            '<button class="btn btn-sm btn-outline-danger btn-delete-obra" data-id="'+o.id+'" data-name="'+escapeAttr(o.name)+'">Excluir</button>' +
           '</div>';
         listaObras.appendChild(li);
 
@@ -336,6 +336,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
     if (!pendingDelete) return;
     const { type, id } = pendingDelete;
+
     const endpoint = (type === 'obra') ? 'delete_obra.php' : 'delete_funcionario.php';
     try {
       const resp = await fetch(endpoint, {
@@ -347,7 +348,8 @@ document.addEventListener('DOMContentLoaded', function() {
       if (data.success) {
         if (type === 'obra') {
           // remove obra list item and options
-          const li = listaObras.querySelector('li[data-id="'+id+'"]');
+          const li = listaObras.querySelector('li[data-token="'+id+'"]');
+
           if (li) li.remove();
           // remove from selects
           [funcObraSelect, editarObraSelect].forEach(sel => {

@@ -30,6 +30,23 @@ try {
         exit;
     }
 
+
+    $stmt = $conn->prepare('
+        SELECT p.funcionario_id, f.name, p.tipo, p.ocorrido_at
+        FROM pontos p
+        JOIN funcionarios f ON f.id = p.funcionario_id
+        WHERE p.obra_id = :obra
+        AND p.ocorrido_at BETWEEN :ini AND :fim
+        ORDER BY f.name ASC, p.ocorrido_at ASC
+    ');
+    $stmt->execute([
+        ':obra' => (int)$obra['id'],
+        ':ini' => $inicioMes,
+        ':fim' => $fimMes
+    ]);
+    $funcRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
     $stmt = $conn->prepare('
         SELECT tipo, ocorrido_at
         FROM pontos
@@ -71,6 +88,64 @@ function sec2hms($sec) {
     $h = floor($sec / 3600); $m = floor(($sec % 3600) / 60); $s = $sec % 60;
     return sprintf('%02d:%02d:%02d', $h, $m, $s);
 }
+
+$porFuncionario = [];
+
+$funcEventosDia = [];
+
+foreach ($funcRows as $r) {
+    $fid = $r['funcionario_id'];
+    $dia = date('Y-m-d', strtotime($r['ocorrido_at']));
+
+    $funcEventosDia[$fid][$dia][] = $r;
+
+    if (!isset($porFuncionario[$fid])) {
+        $porFuncionario[$fid] = [
+            'name' => $r['name'],
+            'work' => 0,
+            'break' => 0
+        ];
+    }
+}
+
+    foreach ($funcEventosDia as $fid => $dias) {
+        foreach ($dias as $dia => $eventos) {
+
+            $entry = null;
+            $breakStart = null;
+
+            foreach ($eventos as $ev) {
+                $ts = strtotime($ev['ocorrido_at']);
+
+                if ($ev['tipo'] === 'entrada') {
+                    $entry = $ts;
+
+                } elseif ($ev['tipo'] === 'saida' && $entry !== null) {
+                    $porFuncionario[$fid]['work'] += max(0, $ts - $entry);
+                    $entry = null;
+
+                } elseif ($ev['tipo'] === 'pausa_inicio') {
+                    $breakStart = $ts;
+
+                } elseif ($ev['tipo'] === 'pausa_fim' && $breakStart !== null) {
+                    $porFuncionario[$fid]['break'] += max(0, $ts - $breakStart);
+                    $breakStart = null;
+                }
+            }
+        }
+    }
+
+    // calcula líquido
+    foreach ($porFuncionario as $fid => &$f) {
+        $f['net'] = max(0, $f['work'] - $f['break']);
+    }
+
+// Calcular líquido e limpar campos internos
+foreach ($porFuncionario as $fid => &$f) {
+    $f['net'] = max(0, $f['work'] - $f['break']);
+    unset($f['_entry'], $f['_break']);
+}
+
 ?><!doctype html>
 <html lang="pt-BR">
 <head>
@@ -129,6 +204,29 @@ function sec2hms($sec) {
                 </div>
             </form>
         </div>
+    <div class="mt-4 p-3 border rounded bg-white">
+        <h4>Horas totais por funcionário</h4>
+        <table class="table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th>Funcionário</th>
+                    <th>Bruto</th>
+                    <th>Pausas</th>
+                    <th>Líquido</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($porFuncionario as $f): ?>
+                <tr>
+                    <td><?= htmlspecialchars($f['name']) ?></td>
+                    <td><?= sec2hms($f['work']) ?></td>
+                    <td><?= sec2hms($f['break']) ?></td>
+                    <td><strong><?= sec2hms($f['net']) ?></strong></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
 
     <div class="d-flex justify-content-between align-items-center ">
 

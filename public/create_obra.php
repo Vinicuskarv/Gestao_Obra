@@ -31,13 +31,13 @@ try {
     $conn = $db->getConnection();
 
     // garante tabela com coluna token (única)
-    $conn->exec("CREATE TABLE IF NOT EXISTS obras (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        token VARCHAR(20) DEFAULT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-    $conn->exec("ALTER TABLE obras ADD UNIQUE INDEX ux_obras_token (token);");
+    // $conn->exec("CREATE TABLE IF NOT EXISTS obras (
+    //     id INT AUTO_INCREMENT PRIMARY KEY,
+    //     name VARCHAR(255) NOT NULL,
+    //     token VARCHAR(20) DEFAULT NULL,
+    //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    // ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    // $conn->exec("ALTER TABLE obras ADD UNIQUE INDEX token (token);");
 
     // gera token único
     $tries = 0;

@@ -48,11 +48,16 @@ try {
         SELECT tipo, ocorrido_at 
         FROM pontos 
         WHERE obra_id = :obra 
-          AND DATE(ocorrido_at) = CURDATE() 
+        AND funcionario_id = :funcionario
+        AND DATE(ocorrido_at) = CURDATE() 
         ORDER BY ocorrido_at ASC
     ');
-    $stmt2->execute([':obra' => (int)$obra['id']]);
+    $stmt2->execute([
+        ':obra' => (int)$obra['id'],
+        ':funcionario' => (int)$funcionario_id
+    ]);
     $pontos = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
 
     // agrupa por tipo (último de cada tipo para exibir)
     $ultimosPontos = [];

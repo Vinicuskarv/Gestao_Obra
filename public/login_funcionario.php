@@ -8,31 +8,47 @@ $companyToken = $_GET['company'] ?? null;
 $obraToken = $_GET['obra'] ?? null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $phone = trim($_POST['phone']);
+    $obraId = $_GET['company'] ?? null;
 
     try {
         $db = new Database();
         $conn = $db->getConnection();
 
-        $stmt = $conn->prepare("SELECT id, name FROM funcionarios WHERE phone = :c LIMIT 1");
+        // Verifica funcionário
+        $stmt = $conn->prepare("SELECT id, token, name FROM funcionarios WHERE token = :c LIMIT 1");
         $stmt->execute([':c' => $phone]);
         $func = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($func) {
-            session_start();
-            $_SESSION['funcionario_id'] = $func['id'];
-            $_SESSION['funcionario_nome'] = $func['nome'];
 
-            header("Location: /token/$obraToken/obra/$companyToken");
-            exit;
+            $funcionario_id = $func['id'];
+
+            // Registrar ponto
+            $stmt = $conn->prepare("
+                INSERT INTO pontos (obra_id, ocorrido_at, funcionario_id)
+                VALUES (:obra, UTC_TIMESTAMP(6), :funcionario)
+            ");
+
+            $stmt->execute([
+                ':obra'        => $obraId,
+                ':funcionario' => $funcionario_id
+            ]);
+
+            $erro = "Ponto registrado com sucesso para: " . $func['name'];
+
         } else {
-            $erro = "Não encontrado.";
+            $erro = "Funcionário não encontrado.";
         }
+
     } catch (Exception $e) {
         $erro = "Erro interno.";
     }
 }
 ?>
+
+
 <!doctype html>
 <html>
 <head>
@@ -46,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            height: auto;
             background: #f0f0f0;
             font-family: Arial;
         }

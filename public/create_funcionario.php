@@ -9,7 +9,6 @@ $name = trim($_POST['name'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $phone = trim($_POST['phone'] ?? '');
 $obra_id = $_POST['obra_id'] ?? null;
-$status = trim($_POST['status'] ?? null); // novo
 
 if ($name === '') {
     echo json_encode(['success' => false, 'error' => 'Nome obrigatório']); exit;

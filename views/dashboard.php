@@ -72,15 +72,6 @@ require_once __DIR__ . '/../config.php';
             <option value="">-- Nenhuma --</option>
           </select>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Status da Associação</label>
-          <select id="funcAssocStatus" class="form-select">
-            <option value="">-- Padrão (ativo) --</option>
-            <option value="ativo">Ativo</option>
-            <option value="suspenso">Suspenso</option>
-            <option value="concluido">Concluído</option>
-          </select>
-        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -124,15 +115,7 @@ require_once __DIR__ . '/../config.php';
           <label class="form-label">Função (opcional)</label>
           <input name="role" id="editarFuncRole" class="form-control">
         </div>
-        <div class="mb-3">
-          <label class="form-label">Status da Associação</label>
-          <select id="editarFuncAssocStatus" class="form-select">
-            <option value="">-- Padrão (ativo) --</option>
-            <option value="ativo">Ativo</option>
-            <option value="suspenso">Suspenso</option>
-            <option value="concluido">Concluído</option>
-          </select>
-        </div>
+       
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -217,10 +200,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const COMPANY_TOKEN = <?= json_encode(defined('COMPANY_TOKEN') ? COMPANY_TOKEN : '') ?>;
 
   // selects/forms (assume modals include these IDs)
-  const funcObraSelect = document.getElementById('funcObraSelect');
-  const funcAssocStatus = document.getElementById('funcAssocStatus'); // novo
-  const editarObraSelect = document.getElementById('editarFuncObraSelect');
-  const editarAssocStatus = document.getElementById('editarFuncAssocStatus'); // novo in edit modal
 
   function tokenUrlFor(obraId) {
     if (!COMPANY_TOKEN) return '';
@@ -246,7 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!data.success) return;
       listaObras.innerHTML = '';
       funcObraSelect.innerHTML = '<option value="">-- Nenhuma --</option>';
-      editarObraSelect.innerHTML = '<option value="">-- Nenhuma --</option>';
       data.obras.forEach(o => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
@@ -271,7 +249,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const opt = document.createElement('option'); opt.value = o.token; opt.textContent = o.name;
         funcObraSelect.appendChild(opt);
-        editarObraSelect.appendChild(opt.cloneNode(true));
       });
     } catch (e) { console.error(e); }
   }
@@ -446,14 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('editarFuncName').value = f.name;
       document.getElementById('editarFuncEmail').value = f.email || '';
       document.getElementById('editarFuncPhone').value = f.phone || '';
-      // selecionar obra e status (usa primeira associação como default)
-      if (f.obras && f.obras.length) {
-        document.getElementById('editarFuncObraSelect').value = f.obras[0].id;
-        document.getElementById('editarFuncAssocStatus').value = f.obras[0].status || 'ativo';
-      } else {
-        document.getElementById('editarFuncObraSelect').value = '';
-        document.getElementById('editarFuncAssocStatus').value = '';
-      }
+   
       // abrir modal
       const modalEl = document.getElementById('editarFuncionarioModal');
       const modal = new bootstrap.Modal(modalEl);
@@ -473,7 +443,6 @@ document.addEventListener('DOMContentLoaded', function() {
         email: document.getElementById('funcEmail').value.trim(),
         phone: document.getElementById('funcPhone').value.trim(),
         obra_id: document.getElementById('funcObraSelect').value || '',
-        status: document.getElementById('funcAssocStatus') ? document.getElementById('funcAssocStatus').value : ''
       });
       const resp = await fetch('create_funcionario.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
       const data = await resp.json();
@@ -507,13 +476,12 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       const obraId = document.getElementById('editarFuncObraSelect').value;
-      const status = document.getElementById('editarFuncAssocStatus') ? document.getElementById('editarFuncAssocStatus').value : '';
       const role = document.getElementById('editarFuncRole').value.trim();
       if (obraId) {
         await fetch('assign_funcionario.php', {
           method: 'POST',
           headers: {'Content-Type':'application/x-www-form-urlencoded'},
-          body: new URLSearchParams({ obra_id: obraId, funcionario_id: id, role, status })
+          body: new URLSearchParams({ obra_id: obraId, funcionario_id: id, role})
         });
       }
       await carregarFuncionarios();

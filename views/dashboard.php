@@ -10,35 +10,32 @@ require_once __DIR__ . '/../config.php';
   <title>Painel - Gestão Ponto</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="css/styles.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
 </head>
 <body>
 <?php include 'navbar.php'; ?>
 
 <div class="container my-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Dashboard</h1>
+  <div class="d-flex justify-content-center align-items-center mb-3">
+    <!-- <h1>Dashboard</h1> -->
     <div>
-      <button id="btnNovaObra" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novaObraModal">Nova Obra</button>
-      <button id="btnNovoFuncionario" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#novoFuncionarioModal">Novo Funcionário</button>
+      <button id="btnNovaObra" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#novaObraModal">Nova Obra</button>
+      <button id="btnNovoFuncionario" class=" btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#novoFuncionarioModal">Novo Funcionário</button>
     </div>
   </div>
 
   <div class="row g-3">
     <div class="col-12">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Obras</h5>
-          <ul id="lista-obras" class="list-group list-group-flush"></ul>
-        </div>
+      <div>
+          <ul id="lista-obras" class="lista-obras"></ul>
       </div>
     </div>
 
     <div class="col-12">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Funcionários</h5>
-          <ul id="lista-funcionarios" class="list-group list-group-flush"></ul>
-        </div>
+      <div>
+          <ul id="lista-funcionarios" class="lista-funcionarios"></ul>
       </div>
     </div>
   </div>
@@ -103,17 +100,6 @@ require_once __DIR__ . '/../config.php';
         <div class="mb-3">
           <label class="form-label">Telefone</label>
           <input name="phone" id="editarFuncPhone" class="form-control">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Associar/Atualizar Obra</label>
-          <select id="editarFuncObraSelect" name="obra_id" class="form-select">
-            <option value="">-- Nenhuma --</option>
-          </select>
-          <div class="form-text">Se escolher uma obra, o funcionário será associado a ela.</div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Função (opcional)</label>
-          <input name="role" id="editarFuncRole" class="form-control">
         </div>
        
       </div>
@@ -227,23 +213,23 @@ document.addEventListener('DOMContentLoaded', function() {
       funcObraSelect.innerHTML = '<option value="">-- Nenhuma --</option>';
       data.obras.forEach(o => {
         const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.className = 'list-group-item-funcionario d-flex justify-content-between align-items-center';
         li.dataset.token = o.token;
 
         // botão/ link público para marcação (se COMPANY_TOKEN estiver configurado)
         let publicLinkHtml = '';
         if (COMPANY_TOKEN) {
           const url = tokenUrlFor(o.token);
-          publicLinkHtml = '<a class="btn btn-sm btn-outline-info btn-link-obra me-2" href="' + escapeAttr(url) + '" target="_blank" title="Abrir link público">Abrir Link</a>' +
-                           '<button class="btn btn-sm btn-outline-secondary btn-copy-link me-2" data-url="' + escapeAttr(url) + '" title="Copiar link">Copiar</button>';
+          publicLinkHtml = '<a class="btn btn-sm btn-outline-info btn-link-obra me-2"  href="' + escapeAttr(url) + '" target="_blank" title="Abrir link público"><i class="fa fa-external-link" aria-hidden="true"></i></a>' ;
+                          //  '<button class="btn btn-sm btn-outline-secondary btn-copy-link me-2" data-url="' + escapeAttr(url) + '" title="Copiar link">Copiar</button>';
         }
 
         li.innerHTML = '<span class="obra-name">'+escapeHtml(o.name)+'</span>' +
           '<div>' +
             publicLinkHtml +
-            '<button class="btn btn-sm btn-outline-primary btn-detalhes-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Detalhes</button>' +
-            '<button class="btn btn-sm btn-outline-secondary btn-editar-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'">Editar</button>' +
-            '<button class="btn btn-sm btn-outline-danger btn-delete-obra" data-id="'+o.id+'" data-name="'+escapeAttr(o.name)+'">Excluir</button>' +
+            '<button class="btn btn-sm btn-outline-primary btn-detalhes-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'"><i class="fa fa-book" aria-hidden="true"></i></button>' +
+            '<button class="btn btn-sm btn-outline-secondary btn-editar-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'"><i class="fa fa-pencil" aria-hidden="true"></i></button>' +
+            '<button class="btn btn-sm btn-outline-danger btn-delete-obra" data-id="'+o.id+'" data-name="'+escapeAttr(o.name)+'"><i class="fa fa-trash" aria-hidden="true"></i></button>' +
           '</div>';
         listaObras.appendChild(li);
 
@@ -273,28 +259,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const header = document.createElement('div'); header.className = 'd-flex justify-content-between';
     const title = document.createElement('div'); title.className = 'fw-bold'; title.textContent = f.name;
     const actions = document.createElement('div');
-    actions.innerHTML = '<button class="btn btn-sm btn-outline-primary btn-editar-func me-2" data-id="'+f.id+'">Editar</button>' +
-                        '<button class="btn btn-sm btn-outline-danger btn-delete-func" data-id="'+f.id+'" data-name="'+escapeAttr(f.name)+'">Excluir</button>';
+    actions.innerHTML = '<button class="btn btn-sm btn-outline-primary btn-editar-func me-2" data-id="'+f.id+'"><i class="fa fa-pencil" aria-hidden="true"></i></button>' +
+                        '<button class="btn btn-sm btn-outline-danger btn-delete-func" data-id="'+f.id+'" data-name="'+escapeAttr(f.name)+'"><i class="fa fa-trash" aria-hidden="true"></i></button>';
     header.appendChild(title); header.appendChild(actions);
 
-    const meta = document.createElement('div'); meta.className = 'small text-muted';
+    const meta = document.createElement('div'); meta.className = 'small';
     meta.textContent = (f.email ? f.email + ' • ' : '') + (f.phone || '');
 
-    const obrasWrap = document.createElement('div'); obrasWrap.className = 'mt-2';
-    if (f.obras && f.obras.length) {
-      f.obras.forEach(o => {
-        const span = document.createElement('span');
-        span.className = 'badge me-1';
-        span.innerHTML = escapeHtml(o.name) + ' ' + (o.status ? ('<span class="badge '+ (o.status==='ativo' ? 'bg-success' : (o.status==='suspenso' ? 'bg-warning text-dark' : 'bg-secondary')) +' ms-1">'+escapeHtml(o.status)+'</span>') : '');
-        obrasWrap.appendChild(span);
-      });
-    } else {
-      obrasWrap.innerHTML = '<small class="text-muted">Sem obras</small>';
-    }
 
     li.appendChild(header);
     li.appendChild(meta);
-    li.appendChild(obrasWrap);
     return li;
   }
 
@@ -475,15 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error(data.error);
         return;
       }
-      const obraId = document.getElementById('editarFuncObraSelect').value;
-      const role = document.getElementById('editarFuncRole').value.trim();
-      if (obraId) {
-        await fetch('assign_funcionario.php', {
-          method: 'POST',
-          headers: {'Content-Type':'application/x-www-form-urlencoded'},
-          body: new URLSearchParams({ obra_id: obraId, funcionario_id: id, role})
-        });
-      }
+  
       await carregarFuncionarios();
       const modalEl = document.getElementById('editarFuncionarioModal');
       const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);

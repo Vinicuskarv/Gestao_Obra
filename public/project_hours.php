@@ -153,6 +153,7 @@ foreach ($funcRows as $r) {
 <title>Pontos — <?= htmlspecialchars($obra['name'], ENT_QUOTES, 'UTF-8') ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link href="css/styles.css" rel="stylesheet">
 
 </head>
 
@@ -162,7 +163,7 @@ foreach ($funcRows as $r) {
         <h3>Obra: <?= htmlspecialchars($obra['name'], ENT_QUOTES, 'UTF-8') ?></h3>
         <a href="/dashboard.php" class="btn btn-sm btn-secondary">Voltar</a>
     </div>
-    <div class="mb-4 p-3 border rounded bg-light">
+    <div class="mb-4 p-3 border rounded">
         <form method="get">
             <input type="hidden" name="obra_token" value="<?= htmlspecialchars($obraToken) ?>">
 
@@ -175,9 +176,9 @@ foreach ($funcRows as $r) {
             </div>
         </form>
     </div>
-<div class="mt-4 p-3 border rounded bg-white">
+<div class="mt-4 p-3 border rounded">
     <h4>Total de horas trabalhadas (somente dias válidos)</h4>
-    <table class="table table-striped mt-3">
+    <table class="table table-dark table-striped mt-3">
         <thead>
             <tr>
                 <th>Funcionário</th>
@@ -195,9 +196,9 @@ foreach ($funcRows as $r) {
     </table>
 </div>
 
-    <div class="mt-4 p-3 border rounded bg-white">
+    <div class="mt-4 p-3 border rounded">
         <h4>Pontos por funcionário</h4>
-        <table class="table table-striped mt-3">
+        <table class="table table-dark table-striped mt-3">
             <thead>
                 <tr>
                     <th>Funcionário</th>
@@ -214,6 +215,7 @@ foreach ($funcRows as $r) {
             </tbody>
         </table>
     </div>
+    <br>
     <?php foreach ($byDate as $date => $funcionarios): ?>
 
     <?php
@@ -334,7 +336,7 @@ foreach ($funcRows as $r) {
                                     </span>
 
                                     <div>
-                                        <button class="btn btn-sm btn-primary me-2"
+                                        <button class="btn btn-sm btn-outline-primary"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#editModal"
                                                 data-id="<?= $ev['id'] ?>"
@@ -343,7 +345,7 @@ foreach ($funcRows as $r) {
                                         </button>
 
                                         <a href="delete_ponto.php?id=<?= $ev['id'] ?>&obra_token=<?= $obraToken ?>"
-                                        class="btn btn-sm btn-danger"
+                                        class="btn btn-sm btn-outline-danger"
                                         onclick="return confirm('Deseja apagar este registro?')">
                                             Excluir
                                         </a>

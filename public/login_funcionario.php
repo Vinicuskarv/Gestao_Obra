@@ -52,82 +52,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!doctype html>
 <html>
 <head>
-    <title>Login Funcionário</title>
+    <title>Marcação de Ponto</title>
 
     <!-- Biblioteca para ler QR Codes -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: auto;
-            background: #f0f0f0;
-            font-family: Arial;
-        }
-
-        .container {
-            background: white;
-            padding: 25px;
-            width: 320px;
-            text-align: center;
-            border-radius: 10px;
-            box-shadow: 0 0 10px #0003;
-        }
-
-        input {
-            width: 90%;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 5px;
-            border: 1px solid #aaa;
-        }
-
-        button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            background: #008cff;
-            border: none;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        #qr-reader {
-            margin-top: 20px;
-        }
-    </style>
+    <link href="css/styles.css" rel="stylesheet">
+    
 </head>
 <body>
 
-<div class="container">
-    <h3>Login do Funcionário</h3>
+<div class="container-card">
+    <h3>Marcaçao de ponto</h3>
 
     <?php if ($erro): ?>
         <p style="color:red"><?= $erro ?></p>
     <?php endif; ?>
 
-    <form method="post">
-        <input type="text" id="phone" name="phone" placeholder="Digite" required>
+    <form method="post" >
+        <input type="text" id="phone" style="width: auto;" name="phone" placeholder="Digite" required>
         <button type="submit">Entrar</button>
     </form>
 
     <h4>Ou ler QR Code:</h4>
-    <div id="qr-reader" style="width:250px;"></div>
+    <div id="qr-reader" style="width:100%;"></div>
 </div>
 
 <script>
-function onScanSuccess(decodedText) {
-    document.getElementById("phone").value = decodedText;
-}
+    function onScanSuccess(decodedText) {
+        document.getElementById("phone").value = decodedText;
+    }
 
-let html5QrcodeScanner = new Html5QrcodeScanner(
-    "qr-reader",
-    { fps: 10, qrbox: 200 }
-);
+    const qrCodeRegionId = "qr-reader";
+    const html5QrCode = new Html5Qrcode(qrCodeRegionId);
 
-html5QrcodeScanner.render(onScanSuccess);
+    function onScanSuccess(decodedText) {
+        document.getElementById("phone").value = decodedText;
+        html5QrCode.stop();
+    }
+
+    // Listar câmeras
+    Html5Qrcode.getCameras().then(cameras => {
+
+        if (cameras.length === 0) {
+            alert("Nenhuma câmera encontrada.");
+            return;
+        }
+
+        // Tenta encontrar câmera traseira (back)
+        let backCamera = cameras.find(cam =>
+            cam.label.toLowerCase().includes("back") ||
+            cam.label.toLowerCase().includes("traseira") ||
+            cam.label.toLowerCase().includes("environment")
+        );
+
+        // Se não achar, usa a última (quase sempre a traseira)
+        let cameraId = backCamera ? backCamera.id : cameras[cameras.length - 1].id;
+
+        html5QrCode.start(
+            cameraId,
+            {
+                fps: 10,
+                qrbox: 200
+            },
+            onScanSuccess
+        );
+    });
+
+
 </script>
 
 </body>

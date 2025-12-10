@@ -39,6 +39,33 @@ require_once __DIR__ . '/../config.php';
       </div>
     </div>
   </div>
+  <div class="row g-3">
+    <h3 class="mt-4">Tokens</h3>
+    <button class="btn btn-outline-dark mb-2" data-bs-toggle="modal" data-bs-target="#novoTokenModal">
+        Criar Token
+    </button>
+
+    <ul id="lista-tokens" class="list-group"></ul>
+  </div>
+
+</div>
+<div class="modal fade" id="novoTokenModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="formNovoToken" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Criar Token</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label">Nome do Token</label>
+        <input id="tokenName" name="name" class="form-control" required>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Criar</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Modal Novo Funcionário -->
@@ -178,7 +205,82 @@ require_once __DIR__ . '/../config.php';
 </div>
 
 <script>
+
+const listaTokens = document.getElementById('lista-tokens');
+
+// CARREGAR
+async function carregarTokens() {
+    const resp = await fetch('list_tokens.php');
+    const data = await resp.json();
+    if (!data.success) return;
+
+    listaTokens.innerHTML = '';
+
+    data.tokens.forEach(t => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+        li.innerHTML = `
+            <div>
+                <strong>${t.name}</strong><br>
+                <small>Token: ${t.token}</small><br>
+                <span class="badge bg-${t.status === 'ativo' ? 'success' : 'secondary'}">
+                    ${t.status}
+                </span>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-danger btn-del-token" data-id="${t.id}">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        `;
+
+        listaTokens.appendChild(li);
+    });
+}
+
+document.addEventListener('click', async function(e){
+    const btn = e.target.closest('.btn-del-token');
+    if (!btn) return;
+
+    if (!confirm("Excluir token?")) return;
+
+    const resp = await fetch('delete_token.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({ id: btn.dataset.id })
+    });
+
+    const data = await resp.json();
+    if (data.success) carregarTokens();
+});
+
+// CRIAR TOKEN
+document.getElementById('formNovoToken').addEventListener('submit', async function(e){
+    console.log("Foi clicado para criar token");
+
+    e.preventDefault();
+
+    const name = document.getElementById('tokenName').value.trim();
+
+    const resp = await fetch('create_token.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({ name })
+    });
+
+    const data = await resp.json();
+    if (data.success) {
+        console.log("Token criado:", data.token);
+        carregarTokens();
+        bootstrap.Modal.getInstance(document.getElementById('novoTokenModal')).hide();
+    }
+});
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
+  carregarTokens();
   const listaObras = document.getElementById('lista-obras');
   const listaFuncs = document.getElementById('lista-funcionarios');
 

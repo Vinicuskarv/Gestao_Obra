@@ -34,7 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             padding: 20px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            background-color: #f9f9f9;
+            background: linear-gradient(to right, #2c2c2d57, #38383847) !important;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .login-container h2{
             text-align: center;
@@ -67,8 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .login-container form{
             display: flex;
             flex-direction: column;
-            background: #f9f9f9;
             box-shadow: none !important;
+            background: transparent !important;
+            border: none !important;
         }
     </style>
 </head>

@@ -128,7 +128,7 @@ input[type="submit"]:hover {
     background-color: #ffffff;
     margin-bottom: 10px;
     padding: 15px;
-    border: #42424273 1px solid;
+    border: #ffffff 1px solid;
     box-shadow: 0 2px 5px rgb(137 137 137 / 16%);
     min-width: 200px;
     min-height: 100px;
@@ -142,12 +142,15 @@ input[type="submit"]:hover {
     background: linear-gradient(to right, #2c2c2d57, #38383847) !important;
 
 }
+.style-background-token{
+    background-color: #3c3c3c5e !important;
+}
 
 .lista-funcionarios {
     list-style-type: none;
     display: grid;
     gap: 20px;
-    border: #42424273 1px solid;
+    border: #ffffff 1px solid;
     padding: 20px;
     border-radius: 6px !important;
     box-shadow: 0 2px 5px rgb(137 137 137 / 16%);

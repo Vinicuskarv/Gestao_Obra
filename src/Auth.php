@@ -19,6 +19,7 @@ class Auth {
                 session_start();
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
+                $_SESSION['admin'] = (int)$user['admin'];
                 return true;
             }
         }

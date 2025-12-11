@@ -1,6 +1,7 @@
 <?php
 // ...existing code...
 require_once __DIR__ . '/../config.php';
+
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -39,13 +40,16 @@ require_once __DIR__ . '/../config.php';
       </div>
     </div>
   </div>
-  <div class="row g-3">
-    <h3 class="mt-4">Tokens</h3>
-    <button class="btn btn-outline-dark mb-2" data-bs-toggle="modal" data-bs-target="#novoTokenModal">
-        Criar Token
-    </button>
+  <?php if (!empty($_SESSION['admin']) && $_SESSION['admin'] == 1): ?>
+    <div class="row g-3">
+      <h3 class="mt-4">Tokens</h3>
+      <button class="btn btn-outline-dark mb-2" data-bs-toggle="modal" data-bs-target="#novoTokenModal">
+          Criar Token
+      </button>
 
-    <ul id="lista-tokens" class="list-group"></ul>
+      <ul id="lista-tokens" class="list-group"></ul>
+    <?php endif; ?>
+
   </div>
 
 </div>
@@ -204,11 +208,41 @@ require_once __DIR__ . '/../config.php';
   </div>
 </div>
 
+<!-- Modal Editar Token -->
+<div class="modal fade" id="editarTokenModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="formEditarToken" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Token</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editarTokenId" name="id">
+        <div class="mb-3">
+          <label class="form-label">Nome do Token</label>
+          <input id="editarTokenName" name="name" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Status</label>
+          <select id="editarTokenStatus" name="status" class="form-select">
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 
 const listaTokens = document.getElementById('lista-tokens');
 
-// CARREGAR
+// CARREGAR TOKENS
 async function carregarTokens() {
     const resp = await fetch('list_tokens.php');
     const data = await resp.json();
@@ -218,7 +252,7 @@ async function carregarTokens() {
 
     data.tokens.forEach(t => {
         const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.className = 'list-group-item d-flex justify-content-between align-items-center style-background-token';
 
         li.innerHTML = `
             <div>
@@ -229,6 +263,9 @@ async function carregarTokens() {
                 </span>
             </div>
             <div>
+                <button class="btn btn-sm btn-outline-primary btn-editar-token me-2" data-id="${t.id}" data-name="${t.name}" data-status="${t.status}">
+                    <i class="fa fa-pencil"></i>
+                </button>
                 <button class="btn btn-sm btn-outline-danger btn-del-token" data-id="${t.id}">
                     <i class="fa fa-trash"></i>
                 </button>
@@ -240,6 +277,22 @@ async function carregarTokens() {
 }
 
 document.addEventListener('click', async function(e){
+    const btnEditar = e.target.closest('.btn-editar-token');
+    if (btnEditar) {
+        const id = btnEditar.dataset.id;
+        const name = btnEditar.dataset.name;
+        const status = btnEditar.dataset.status;
+
+        document.getElementById('editarTokenId').value = id;
+        document.getElementById('editarTokenName').value = name;
+        document.getElementById('editarTokenStatus').value = status;
+
+        const modalEl = document.getElementById('editarTokenModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        return;
+    }
+
     const btn = e.target.closest('.btn-del-token');
     if (!btn) return;
 
@@ -255,29 +308,49 @@ document.addEventListener('click', async function(e){
     if (data.success) carregarTokens();
 });
 
+// SALVAR EDIÇÃO DE TOKEN
+document.getElementById('formEditarToken').addEventListener('submit', async function(e){
+    e.preventDefault();
+
+    const id = document.getElementById('editarTokenId').value;
+    const name = document.getElementById('editarTokenName').value.trim();
+    const status = document.getElementById('editarTokenStatus').value;
+
+    if (!id || !name) return;
+
+    const resp = await fetch('update_token.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({ id, name, status })
+    });
+
+    const data = await resp.json();
+    if (data.success) {
+        carregarTokens();
+        bootstrap.Modal.getInstance(document.getElementById('editarTokenModal')).hide();
+    } else {
+        alert('Erro ao atualizar token: ' + data.error);
+    }
+});
+
 // CRIAR TOKEN
 document.getElementById('formNovoToken').addEventListener('submit', async function(e){
     console.log("Foi clicado para criar token");
-
     e.preventDefault();
-
     const name = document.getElementById('tokenName').value.trim();
-
     const resp = await fetch('create_token.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: new URLSearchParams({ name })
     });
-
     const data = await resp.json();
     if (data.success) {
         console.log("Token criado:", data.token);
         carregarTokens();
         bootstrap.Modal.getInstance(document.getElementById('novoTokenModal')).hide();
+        document.getElementById('tokenName').value = '';
     }
 });
-
-
 
 document.addEventListener('DOMContentLoaded', function() {
   carregarTokens();

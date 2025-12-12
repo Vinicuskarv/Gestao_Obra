@@ -5,8 +5,6 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 
-// endpoint para criar obra via AJAX
-header('Content-Type: application/json; charset=utf-8');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Método inválido']);
     exit;
@@ -20,49 +18,72 @@ if ($name === '') {
 
 require_once __DIR__ . '../../src/Database.php';
 
-function generateToken(int $len = 20): string {
-    // gera token hex de tamanho $len (até 20). Usa random_bytes para segurança.
-    $bytes = random_bytes((int)ceil($len / 2));
-    return substr(bin2hex($bytes), 0, $len);
-}
-
 try {
     $db = new Database();
     $conn = $db->getConnection();
+    $conn->beginTransaction();
 
-    // garante tabela com coluna token (única)
-    // $conn->exec("CREATE TABLE IF NOT EXISTS obras (
-    //     id INT AUTO_INCREMENT PRIMARY KEY,
-    //     name VARCHAR(255) NOT NULL,
-    //     token VARCHAR(20) DEFAULT NULL,
-    //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    // ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-    // $conn->exec("ALTER TABLE obras ADD UNIQUE INDEX token (token);");
+    // 1️⃣ Buscar token disponível
+    $stmtToken = $conn->prepare("
+        SELECT id, token 
+        FROM tokens 
+        WHERE status = 'inativo' 
+          AND token NOT IN (SELECT token FROM obras)
+        LIMIT 1
+    ");
+    $stmtToken->execute();
+    $tokenData = $stmtToken->fetch(PDO::FETCH_ASSOC);
 
-    // gera token único
-    $tries = 0;
-    do {
-        $token = generateToken(20);
-        $stmtCheck = $conn->prepare('SELECT COUNT(*) FROM obras WHERE token = :token');
-        $stmtCheck->execute([':token' => $token]);
-        $exists = (int)$stmtCheck->fetchColumn() > 0;
-        $tries++;
-        if ($tries > 10) {
-            // proteção extra — pouco provável
-            throw new Exception('Não foi possível gerar token único');
-        }
-    } while ($exists);
-
-    $stmt = $conn->prepare('INSERT INTO obras (name, token) VALUES (:name, :token)');
-    $ok = $stmt->execute([':name' => $name, ':token' => $token]);
-
-    if ($ok) {
-        $id = (int)$conn->lastInsertId();
-        echo json_encode(['success' => true, 'id' => $id, 'name' => $name, 'token' => $token]);
-    } else {
-        echo json_encode(['success' => false, 'error' => 'Falha ao inserir']);
+    if (!$tokenData) {
+        $conn->rollBack();
+        echo json_encode(['success' => false, 'error' => 'Limite de obras atingido.']);
+        exit;
     }
-} catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => 'Erro: ' . $e->getMessage()]);
-}
 
+    $tokenId = $tokenData['id'];
+    $token = $tokenData['token'];
+
+    // 2️⃣ Marcar token como ativo
+    $stmtUpdate = $conn->prepare("UPDATE tokens SET status = 'ativo' WHERE token = :token");
+    $stmtUpdate->execute([':token' => $token]);
+
+    // 3️⃣ Criar obra usando token
+    $stmtInsert = $conn->prepare("
+        INSERT INTO obras (name, token) 
+        VALUES (:name, :token)
+    ");
+    $stmtInsert->execute([
+        ':name' => $name,
+        ':token' => $token
+    ]);
+
+    $obraId = (int) $conn->lastInsertId();
+    $conn->commit();
+
+    echo json_encode([
+        'success' => true,
+        'id' => $obraId,
+        'name' => $name,
+        'token' => $token
+    ]);
+
+} catch (Exception $e) {
+    if ($conn->inTransaction()) {
+        $conn->rollBack();
+    }
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+}
+?>
+
+<!-- Toast de notificação (canto superior direito) -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="toastNotification" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto" id="toastTitle">Sucesso</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastBody">
+      Operação realizada com sucesso.
+    </div>
+  </div>
+</div>

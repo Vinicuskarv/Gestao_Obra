@@ -20,12 +20,11 @@ if (!$funcionario_id) {
 }
 
 $token = trim($_POST['token'] ?? '');
-$obraId = intval($_POST['obra'] ?? 0);
 $type = trim($_POST['type'] ?? '');
 $horaClient = trim($_POST['hora'] ?? '');
 
 // valida
-if (!$token || $token !== COMPANY_TOKEN || !$obraId || !$type) {
+if (!$token || $token !== COMPANY_TOKEN || !$type) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Parâmetros inválidos.']);
     exit;
@@ -50,7 +49,6 @@ try {
     ');
 
     $stmt->execute([
-        ':obra'        => $obraId,
         ':tipo'        => $tipoDb,
         ':funcionario' => $funcionario_id
     ]);

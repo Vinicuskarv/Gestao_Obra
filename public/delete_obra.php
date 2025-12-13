@@ -15,9 +15,21 @@ try {
     $db = new Database();
     $conn = $db->getConnection();
     $conn->beginTransaction();
-    // remover associações (se existirem)
-    $stmt = $conn->prepare('DELETE FROM obra_funcionario WHERE obra_id = :id');
+
+    $stmt = $conn->prepare('SELECT token FROM obras WHERE id = :id');
     $stmt->execute([':id' => (int)$id]);
+
+    $obra = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$obra) {
+        throw new Exception('Obra não encontrada');
+    }
+
+    $token = $obra['token'];
+
+    
+    $stmtUpdate = $conn->prepare("UPDATE tokens SET status = 'inativo' WHERE token = :token");
+    $stmtUpdate->execute([':token' => $token]);
+
     // remover obra
     $stmt2 = $conn->prepare('DELETE FROM obras WHERE id = :id');
     $stmt2->execute([':id' => (int)$id]);

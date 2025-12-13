@@ -14,7 +14,7 @@ if (!isset($_POST['name']) || trim($_POST['name']) === '') {
 
 $name = trim($_POST['name']);
 $token = bin2hex(random_bytes(16)); 
-$status = "ativo";
+$status = "inativo";
 
 try {
 

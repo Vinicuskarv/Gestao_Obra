@@ -3,9 +3,9 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../src/Database.php';
 
 $erro = '';
+$sucesso = '';
 
 $companyToken = $_GET['company'] ?? null;
-$obraToken = $_GET['obra'] ?? null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':funcionario' => $funcionario_id
             ]);
 
-            $erro = "Ponto registrado com sucesso para: " . $func['name'];
+            $sucesso = "Ponto registrado com sucesso para: " . $func['name'];
 
         } else {
             $erro = "Funcionário não encontrado.";
@@ -67,12 +67,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h3>Marcaçao de ponto</h3>
 
     <?php if ($erro): ?>
-        <p style="color:red"><?= $erro ?></p>
+        <p style="color: red;border: 1px solid; padding: 11px;border-radius: 4px;"><?= $erro ?></p>
+    <?php endif; ?>
+    <?php if ($sucesso): ?>
+        <p style="color: #2ef21d;border: 1px solid;padding: 11px;border-radius: 4px;"><?= $sucesso ?></p>
     <?php endif; ?>
 
     <form method="post" >
         <input type="text" id="phone" style="width: auto;" name="phone" placeholder="Digite" required>
-        <button type="submit">Entrar</button>
+        <button type="submit">Enviar</button>
     </form>
 
     <h4>Ou ler QR Code:</h4>

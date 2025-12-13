@@ -3,21 +3,19 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../src/Database.php';
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-if (!preg_match('#^/token/([^/]+)/obra/([^/]+)/?$#', $path, $m)) {
+if (!preg_match('#^/token/([^/]+)#', $path, $m)) {
     http_response_code(404);
     echo "Not found.";
     exit;
 }
-$companyToken = $m[1];
-$obraToken = $m[2];
+$obraToken = $m[1];
 
 session_start();
-$_SESSION['companyToken'] = $companyToken;
 $_SESSION['obraToken'] = $obraToken;
 
 
 if (!isset($_SESSION['funcionario_id'])) {
-    header("Location: /login_funcionario.php?company=" . $obraToken . "&obra=" . $companyToken);
+    header("Location: /login_funcionario.php?company=" . $obraToken);
     exit;
 }
 

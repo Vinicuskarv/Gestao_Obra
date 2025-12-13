@@ -94,12 +94,7 @@ require_once __DIR__ . '/../config.php';
           <label class="form-label">Telefone</label>
           <input name="phone" id="funcPhone" class="form-control">
         </div>
-        <div class="mb-3">
-          <label class="form-label">Associar à Obra (opcional)</label>
-          <select id="funcObraSelect" name="obra_id" class="form-select">
-            <option value="">-- Nenhuma --</option>
-          </select>
-        </div>
+        
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -364,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function tokenUrlFor(obraId) {
     if (!COMPANY_TOKEN) return '';
-    return location.origin + '/token/' + encodeURIComponent(COMPANY_TOKEN) + '/obra/' + encodeURIComponent(obraId);
+    return location.origin + '/token/' + encodeURIComponent(obraId);
   }
 
   function statusBadge(status) {
@@ -385,7 +380,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const data = await resp.json();
       if (!data.success) return;
       listaObras.innerHTML = '';
-      funcObraSelect.innerHTML = '<option value="">-- Nenhuma --</option>';
       data.obras.forEach(o => {
         const li = document.createElement('li');
         li.className = 'list-group-item-funcionario d-flex justify-content-between align-items-center';
@@ -408,8 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
           '</div>';
         listaObras.appendChild(li);
 
-        const opt = document.createElement('option'); opt.value = o.token; opt.textContent = o.name;
-        funcObraSelect.appendChild(opt);
+        // option for obra select removed (funcObraSelect no longer used)
       });
     } catch (e) { console.error(e); }
   }
@@ -477,11 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
           const li = listaObras.querySelector('li[data-token="'+id+'"]');
 
           if (li) li.remove();
-          // remove from selects
-          [funcObraSelect, editarObraSelect].forEach(sel => {
-            const opt = sel.querySelector('option[value="'+id+'"]');
-            if (opt) opt.remove();
-          });
+          // removed select option cleanup for funcObraSelect (no longer used)
           // reload funcionarios to remove badges referencing the obra
           await carregarFuncionarios();
         } else {
@@ -590,8 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const body = new URLSearchParams({
         name,
         email: document.getElementById('funcEmail').value.trim(),
-        phone: document.getElementById('funcPhone').value.trim(),
-        obra_id: document.getElementById('funcObraSelect').value || '',
+        phone: document.getElementById('funcPhone').value.trim()
       });
       const resp = await fetch('create_funcionario.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
       const data = await resp.json();

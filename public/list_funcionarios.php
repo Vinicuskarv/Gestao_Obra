@@ -24,7 +24,7 @@ try {
         PRIMARY KEY (obra_id, funcionario_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-    $sql = "SELECT f.id, f.name, f.email, f.phone,
+    $sql = "SELECT f.id, f.token, f.name, f.email, f.phone,
                    GROUP_CONCAT(CONCAT(o.token, '::', REPLACE(o.name, '::', ''), '::', COALESCE(ofp.status, 'ativo')) SEPARATOR '||') AS obras
             FROM funcionarios f
             LEFT JOIN obra_funcionario ofp ON ofp.funcionario_id = f.id
@@ -45,13 +45,15 @@ try {
                 }
             }
         }
-        return [
-            'id' => (int)$r['id'],
-            'name' => $r['name'],
-            'email' => $r['email'],
-            'phone' => $r['phone'],
-            'obras' => $obras
-        ];
+       return [
+        'id'    => (int)$r['id'],
+        'token' => $r['token'],
+        'name'  => $r['name'],
+        'email' => $r['email'],
+        'phone' => $r['phone'],
+        'obras' => $obras
+    ];
+
     }, $rows);
 
     echo json_encode(['success' => true, 'funcionarios' => $result], JSON_UNESCAPED_UNICODE);

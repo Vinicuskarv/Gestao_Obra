@@ -232,6 +232,23 @@ require_once __DIR__ . '/../config.php';
     </form>
   </div>
 </div>
+<!-- Modal QR Code Obra -->
+<div class="modal fade" id="qrCodeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content text-center">
+      <div class="modal-header">
+        <h5 class="modal-title">QR Code da Obra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="qrCodeContainer" class="d-flex justify-content-center mb-3"></div>
+        <a id="downloadQr" class="btn btn-outline-primary btn-sm" download="qrcode-obra.png">
+          Baixar QR Code
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 
@@ -348,6 +365,10 @@ document.getElementById('formNovoToken').addEventListener('submit', async functi
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+  function tokenUrlForFuncionario(token) {
+    return location.origin + '/token/' + encodeURIComponent(token);
+  }
+
   carregarTokens();
   const listaObras = document.getElementById('lista-obras');
   const listaFuncs = document.getElementById('lista-funcionarios');
@@ -387,8 +408,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // botão/ link público para marcação (se COMPANY_TOKEN estiver configurado)
         let publicLinkHtml = '';
+        const url = tokenUrlFor(o.token);
         if (COMPANY_TOKEN) {
-          const url = tokenUrlFor(o.token);
+          
           publicLinkHtml = '<a class="btn btn-sm btn-outline-info btn-link-obra me-2"  href="' + escapeAttr(url) + '" target="_blank" title="Abrir link público"><i class="fa fa-external-link" aria-hidden="true"></i></a>' ;
                           //  '<button class="btn btn-sm btn-outline-secondary btn-copy-link me-2" data-url="' + escapeAttr(url) + '" title="Copiar link">Copiar</button>';
         }
@@ -396,6 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
         li.innerHTML = '<span class="obra-name">'+escapeHtml(o.name)+'</span>' +
           '<div>' +
             publicLinkHtml +
+            '<button class="btn btn-sm btn-outline-info btn-qrcode-obra me-2" data-url="' + escapeAttr(url) + '" title="QR Code"><i class="fa fa-qrcode" aria-hidden="true"></i></button>' +
             '<button class="btn btn-sm btn-outline-primary btn-detalhes-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'"><i class="fa fa-book" aria-hidden="true"></i></button>' +
             '<button class="btn btn-sm btn-outline-secondary btn-editar-obra me-2" data-id="'+o.token+'" data-name="'+escapeAttr(o.name)+'"><i class="fa fa-pencil" aria-hidden="true"></i></button>' +
             '<button class="btn btn-sm btn-outline-danger btn-delete-obra" data-id="'+o.id+'" data-name="'+escapeAttr(o.name)+'"><i class="fa fa-trash" aria-hidden="true"></i></button>' +
@@ -427,8 +450,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const header = document.createElement('div'); header.className = 'd-flex justify-content-between';
     const title = document.createElement('div'); title.className = 'fw-bold'; title.textContent = f.name;
     const actions = document.createElement('div');
-    actions.innerHTML = '<button class="btn btn-sm btn-outline-primary btn-editar-func me-2" data-id="'+f.id+'"><i class="fa fa-pencil" aria-hidden="true"></i></button>' +
-                        '<button class="btn btn-sm btn-outline-danger btn-delete-func" data-id="'+f.id+'" data-name="'+escapeAttr(f.name)+'"><i class="fa fa-trash" aria-hidden="true"></i></button>';
+    console.log('Rendering actions for funcionario:', f);
+    actions.innerHTML =
+      '<button class="btn btn-sm btn-outline-info btn-qrcode-func me-2" ' +
+      'data-token="'+escapeAttr(f.token)+'" title="QR Code">' +
+      '<i class="fa fa-qrcode"></i></button>' +
+
+      '<button class="btn btn-sm btn-outline-primary btn-editar-func me-2" data-id="'+f.id+'">' +
+      '<i class="fa fa-pencil"></i></button>' +
+
+      '<button class="btn btn-sm btn-outline-danger btn-delete-func" data-id="'+f.id+'" data-name="'+escapeAttr(f.name)+'">' +
+      '<i class="fa fa-trash"></i></button>';
+
     header.appendChild(title); header.appendChild(actions);
 
     const meta = document.createElement('div'); meta.className = 'small';
@@ -492,6 +525,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Delegation: abrir confirmação ao clicar em excluir ou copiar link
   listaObras.addEventListener('click', function(e) {
+    const btnQr = e.target.closest('.btn-qrcode-obra');
+    if (btnQr) {
+      const url = btnQr.dataset.url;
+      if (!url) return;
+
+      const qrContainer = document.getElementById('qrCodeContainer');
+      qrContainer.innerHTML = '';
+
+      const qr = new QRCode(qrContainer, {
+        text: url,
+        width: 200,
+        height: 200
+      });
+
+      // gerar imagem para download
+      setTimeout(() => {
+        const img = qrContainer.querySelector('img');
+        if (img) {
+          document.getElementById('downloadQr').href = img.src;
+        }
+      }, 200);
+
+      const modalEl = document.getElementById('qrCodeModal');
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+
+      return;
+    }
+
     const btnDel = e.target.closest('.btn-delete-obra');
     if (btnDel) {
       openConfirmDelete('obra', btnDel.dataset.id, btnDel.dataset.name || btnDel.getAttribute('data-name') || '');
@@ -532,16 +594,43 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   listaFuncs.addEventListener('click', function(e) {
+    const btnQrFunc = e.target.closest('.btn-qrcode-func');
+    if (btnQrFunc) {
+      const token = btnQrFunc.dataset.token;
+      if (!token) return;
+
+      const url = token;
+
+      const qrContainer = document.getElementById('qrCodeContainer');
+      qrContainer.innerHTML = '';
+
+      new QRCode(qrContainer, {
+        text: url,
+        width: 200,
+        height: 200
+      });
+
+      setTimeout(() => {
+        const img = qrContainer.querySelector('img');
+        if (img) {
+          document.getElementById('downloadQr').href = img.src;
+        }
+      }, 200);
+
+      const modalEl = document.getElementById('qrCodeModal');
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+
+      return;
+    }
+
+
     const btnDel = e.target.closest('.btn-delete-func');
     if (btnDel) {
       openConfirmDelete('func', btnDel.dataset.id, btnDel.dataset.name || btnDel.getAttribute('data-name') || '');
       return;
     }
-    // existing edit handler...
-  });
 
-  // ouvir editar funcionário
-  listaFuncs.addEventListener('click', function(e) {
     const btn = e.target.closest('.btn-editar-func');
     if (!btn) return;
     const id = btn.dataset.id;
@@ -670,7 +759,7 @@ document.addEventListener('DOMContentLoaded', function() {
   (async function init(){ await carregarObras(); await carregarFuncionarios(); })();
 });
 </script>
-
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -14,29 +14,11 @@ if ($name === '') {
     echo json_encode(['success' => false, 'error' => 'Nome obrigatório']); exit;
 }
 
+
 try {
     $db = new Database();
     $conn = $db->getConnection();
 
-    // // garante tabelas
-    // $conn->exec("CREATE TABLE IF NOT EXISTS funcionarios (
-    //     id INT AUTO_INCREMENT PRIMARY KEY,
-    //     name VARCHAR(255) NOT NULL,
-    //     email VARCHAR(150),
-    //     phone VARCHAR(50),
-    //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    // ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-    // $conn->exec("CREATE TABLE IF NOT EXISTS obra_funcionario (
-    //     obra_id INT NOT NULL,
-    //     funcionario_id INT NOT NULL,
-    //     role VARCHAR(100) DEFAULT NULL,
-    //     status VARCHAR(50) DEFAULT 'ativo',
-    //     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    //     PRIMARY KEY (obra_id, funcionario_id)
-    // ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-    // 1️⃣ Buscar token disponível
     $stmtToken = $conn->prepare("
         SELECT id, token 
         FROM tokens 
@@ -52,6 +34,22 @@ try {
         echo json_encode(['success' => false, 'error' => 'Limite de atingido.']);
         exit;
     }
+    $code = '';
+    if ($name ){
+        $stmtName = $conn->prepare("
+            SELECT id, name 
+            FROM funcionarios 
+            ORDER BY id DESC
+            LIMIT 1
+        ");
+        $stmtName->execute();
+        $userName = $stmtName->fetch(PDO::FETCH_ASSOC);
+
+        $id = $userName['id'] + 1;
+        $newId = str_pad($id, 2, '0', STR_PAD_LEFT);
+        $code = mb_strtoupper(mb_substr($name, 0, 1, 'UTF-8'), 'UTF-8') . '' . $newId;
+    }
+
 
     $token = $tokenData['token'];
 
@@ -59,8 +57,8 @@ try {
     $stmtUpdate->execute([':token' => $token]);
 
 
-    $stmt = $conn->prepare('INSERT INTO funcionarios (name, email, phone , token) VALUES (:name, :email, :phone, :token)');
-    $ok = $stmt->execute([':name' => $name, ':email' => $email ?: null, ':phone' => $phone ?: null , ':token' => $token ?: null]);
+    $stmt = $conn->prepare('INSERT INTO funcionarios (name, email, phone , token, code) VALUES (:name, :email, :phone, :token, :code)');
+    $ok = $stmt->execute([':name' => $name, ':email' => $email ?: null, ':phone' => $phone ?: null , ':token' => $token ?: null, ':code' => $code ?: null]);
 
     if (!$ok) {
         echo json_encode(['success' => false, 'error' => 'Falha ao inserir funcionário']); exit;

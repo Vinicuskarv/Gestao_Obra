@@ -6,25 +6,9 @@ try {
     $db = new Database();
     $conn = $db->getConnection();
 
-    // garante schema mínimo (opcional)
-    $conn->exec("CREATE TABLE IF NOT EXISTS funcionarios (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(150),
-        phone VARCHAR(50),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    
 
-    $conn->exec("CREATE TABLE IF NOT EXISTS obra_funcionario (
-        obra_id INT NOT NULL,
-        funcionario_id INT NOT NULL,
-        role VARCHAR(100) DEFAULT NULL,
-        status VARCHAR(50) DEFAULT 'ativo',
-        assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (obra_id, funcionario_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-    $sql = "SELECT f.id, f.token, f.name, f.email, f.phone,
+    $sql = "SELECT f.id, f.token, f.code, f.name, f.email, f.phone,
                    GROUP_CONCAT(CONCAT(o.token, '::', REPLACE(o.name, '::', ''), '::', COALESCE(ofp.status, 'ativo')) SEPARATOR '||') AS obras
             FROM funcionarios f
             LEFT JOIN obra_funcionario ofp ON ofp.funcionario_id = f.id
@@ -48,6 +32,7 @@ try {
        return [
         'id'    => (int)$r['id'],
         'token' => $r['token'],
+        'code'  => $r['code'],
         'name'  => $r['name'],
         'email' => $r['email'],
         'phone' => $r['phone'],

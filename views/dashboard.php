@@ -23,7 +23,6 @@ require_once __DIR__ . '/../config.php';
     <!-- <h1>Dashboard</h1> -->
     <div>
       <button id="btnNovaObra" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#novaObraModal">Nova Obra</button>
-      <button id="btnNovoFuncionario" class=" btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#novoFuncionarioModal">Novo Funcionário</button>
     </div>
   </div>
 
@@ -33,7 +32,12 @@ require_once __DIR__ . '/../config.php';
           <ul id="lista-obras" class="lista-obras"></ul>
       </div>
     </div>
-
+  <div class="d-flex justify-content-center align-items-center mb-3">
+    <!-- <h1>Dashboard</h1> -->
+    <div>
+      <button id="btnNovoFuncionario" class=" btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#novoFuncionarioModal">Novo Funcionário</button>
+    </div>
+  </div>
     <div class="col-12">
       <div>
           <ul id="lista-funcionarios" class="lista-funcionarios"></ul>
@@ -127,7 +131,10 @@ require_once __DIR__ . '/../config.php';
           <label class="form-label">Telefone</label>
           <input name="phone" id="editarFuncPhone" class="form-control">
         </div>
-       
+        <div class="mb-3">
+          <label class="form-label">Codigo</label>
+          <input name="code" id="editarFuncCode" class="form-control">
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -347,7 +354,6 @@ document.getElementById('formEditarToken').addEventListener('submit', async func
 
 // CRIAR TOKEN
 document.getElementById('formNovoToken').addEventListener('submit', async function(e){
-    console.log("Foi clicado para criar token");
     e.preventDefault();
     const name = document.getElementById('tokenName').value.trim();
     const resp = await fetch('create_token.php', {
@@ -357,7 +363,6 @@ document.getElementById('formNovoToken').addEventListener('submit', async functi
     });
     const data = await resp.json();
     if (data.success) {
-        console.log("Token criado:", data.token);
         carregarTokens();
         bootstrap.Modal.getInstance(document.getElementById('novoTokenModal')).hide();
         document.getElementById('tokenName').value = '';
@@ -399,12 +404,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const resp = await fetch('list_obras.php');
       if (!resp.ok) return;
       const data = await resp.json();
+
       if (!data.success) return;
       listaObras.innerHTML = '';
       data.obras.forEach(o => {
         const li = document.createElement('li');
         li.className = 'list-group-item-funcionario d-flex justify-content-between align-items-center';
         li.dataset.token = o.token;
+        const alertaHtml = o.tem_ponto_incompleto
+          ? '<span class="badge bg-danger ms-2" title="Funcionário com ponto incompleto">⚠ Ponto pendente</span>'
+          : '';
 
         // botão/ link público para marcação (se COMPANY_TOKEN estiver configurado)
         let publicLinkHtml = '';
@@ -415,7 +424,12 @@ document.addEventListener('DOMContentLoaded', function() {
                           //  '<button class="btn btn-sm btn-outline-secondary btn-copy-link me-2" data-url="' + escapeAttr(url) + '" title="Copiar link">Copiar</button>';
         }
 
-        li.innerHTML = '<span class="obra-name">'+escapeHtml(o.name)+'</span>' +
+        li.innerHTML =
+          '<span class="obra-name">' +
+            escapeHtml(o.name) +
+            alertaHtml +
+          '</span>' +
+
           '<div>' +
             publicLinkHtml +
             '<button class="btn btn-sm btn-outline-info btn-qrcode-obra me-2" data-url="' + escapeAttr(url) + '" title="QR Code"><i class="fa fa-qrcode" aria-hidden="true"></i></button>' +
@@ -448,9 +462,9 @@ document.addEventListener('DOMContentLoaded', function() {
     li.dataset.id = f.id;
 
     const header = document.createElement('div'); header.className = 'd-flex justify-content-between';
-    const title = document.createElement('div'); title.className = 'fw-bold'; title.textContent = f.name;
+    const title = document.createElement('div'); title.className = 'fw-bold';title.innerHTML = `${f.name} <span style="color: green;">${f.code}</span>`;
+
     const actions = document.createElement('div');
-    console.log('Rendering actions for funcionario:', f);
     actions.innerHTML =
       '<button class="btn btn-sm btn-outline-info btn-qrcode-func me-2" ' +
       'data-token="'+escapeAttr(f.token)+'" title="QR Code">' +
@@ -650,6 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('editarFuncName').value = f.name;
       document.getElementById('editarFuncEmail').value = f.email || '';
       document.getElementById('editarFuncPhone').value = f.phone || '';
+      document.getElementById('editarFuncCode').value = f.code || '';
    
       // abrir modal
       const modalEl = document.getElementById('editarFuncionarioModal');
@@ -693,7 +708,8 @@ document.addEventListener('DOMContentLoaded', function() {
         id,
         name: document.getElementById('editarFuncName').value.trim(),
         email: document.getElementById('editarFuncEmail').value.trim(),
-        phone: document.getElementById('editarFuncPhone').value.trim()
+        phone: document.getElementById('editarFuncPhone').value.trim(),
+        code: document.getElementById('editarFuncCode').value.trim()
       });
       const resp = await fetch('update_funcionario.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
       const data = await resp.json();
@@ -725,7 +741,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // criar/editar obra handlers (assume create_obra.php & update_obra.php existem)
   const formNovaObra = document.getElementById('formNovaObra');
   if (formNovaObra) formNovaObra.addEventListener('submit', async function(e){
-    console.log('Submitting new obra form');
     e.preventDefault();
     const name = document.getElementById('obraName').value.trim();
     if (!name) return;

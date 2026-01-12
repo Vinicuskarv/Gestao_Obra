@@ -12,14 +12,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = trim($_POST['phone']);
     $obraId = $_GET['company'] ?? null;
 
-    try {
         $db = new Database();
         $conn = $db->getConnection();
 
         // Verifica funcionário
-        $stmt = $conn->prepare("SELECT id, token, name FROM funcionarios WHERE token = :c LIMIT 1");
-        $stmt->execute([':c' => $phone]);
+        $stmt = $conn->prepare("
+            SELECT id, token, code, name 
+            FROM funcionarios 
+            WHERE token = :valor 
+            LIMIT 1
+        ");
+        $stmt->execute([':valor' => $phone]);
         $func = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Se não achou pelo token, tenta pelo code
+        if (!$func) {
+            $stmt = $conn->prepare("
+                SELECT id, token, code, name 
+                FROM funcionarios 
+                WHERE code = :valor 
+                LIMIT 1
+            ");
+            $stmt->execute([':valor' => $phone]);
+            $func = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
 
         if ($func) {
 
@@ -27,24 +43,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Registrar ponto
             $stmt = $conn->prepare("
-                INSERT INTO pontos (obra_id, ocorrido_at, funcionario_id)
-                VALUES (:obra, UTC_TIMESTAMP(6), :funcionario)
+                INSERT INTO pontos (obra_id, ocorrido_at, funcionario_id, funcionario_name)
+                VALUES (:obra, UTC_TIMESTAMP(6), :funcionario, :funcionario_name)
             ");
 
             $stmt->execute([
                 ':obra'        => $obraId,
-                ':funcionario' => $funcionario_id
+                ':funcionario' => $funcionario_id,
+                ':funcionario_name' => $func['name']
             ]);
 
             $sucesso = "Ponto registrado com sucesso para: " . $func['name'];
 
         } else {
-            $erro = "Funcionário não encontrado.";
+            $erro = "Funcionário não encontrado pelo token ou código.";
         }
 
-    } catch (Exception $e) {
-        $erro = "Erro interno.";
-    }
+
+   
 }
 ?>
 

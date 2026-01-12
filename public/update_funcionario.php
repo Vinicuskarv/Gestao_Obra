@@ -9,6 +9,7 @@ $id = $_POST['id'] ?? '';
 $name = trim($_POST['name'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $phone = trim($_POST['phone'] ?? '');
+$code = trim($_POST['code'] ?? '');
 
 if (!is_numeric($id) || $name === '') {
     echo json_encode(['success' => false, 'error' => 'ID inválido ou nome vazio']); exit;
@@ -18,8 +19,8 @@ try {
     $db = new Database();
     $conn = $db->getConnection();
 
-    $stmt = $conn->prepare('UPDATE funcionarios SET name = :name, email = :email, phone = :phone WHERE id = :id');
-    $ok = $stmt->execute([':name' => $name, ':email' => $email ?: null, ':phone' => $phone ?: null, ':id' => (int)$id]);
+    $stmt = $conn->prepare('UPDATE funcionarios SET name = :name, email = :email, phone = :phone, code = :code WHERE id = :id');
+    $ok = $stmt->execute([':name' => $name, ':email' => $email ?: null, ':phone' => $phone ?: null, ':code' => $code ?: null, ':id' => (int)$id]);
 
     echo json_encode(['success' => (bool)$ok]);
 } catch (Exception $e) {

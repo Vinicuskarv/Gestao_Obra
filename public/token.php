@@ -269,7 +269,7 @@ $tiposDisponiveis = ['entrada', 'pausa_inicio', 'pausa_fim', 'saida'];
                 });
 
                 try {
-                    const resp = await fetch('/mark_ponto.php', {
+                    const resp = await fetch('/mark_poanto.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: new URLSearchParams({

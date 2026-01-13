@@ -84,6 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="text" name="username" placeholder="Username" required>
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
+            or 
+            <a href="funcionarioLogin.php" style="margin-top: 10px; text-align: center; display: block; color: #007bff; text-decoration: none;">Login Funcionário</a>
         </form>
     </div>
 </body>

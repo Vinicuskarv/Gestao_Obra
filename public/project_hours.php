@@ -154,10 +154,105 @@ foreach ($funcRows as $r) {
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <link href="css/styles.css" rel="stylesheet">
+    <style>
+        .nav-link{
+            cursor: pointer;
+            color: #ffffff;
+        }
+        .nav-link:hover{
+            cursor: pointer;
+            color: #ffffff;
+        }
+    </style>
 
 </head>
 
 <body class="p-4">
+    <ul class="nav nav-tabs mb-4" id="tabsRelatorios" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active"
+                    id="tab-pontos"
+                    data-bs-toggle="tab"
+                    data-bs-target="#pontos"
+                    type="button"
+                    role="tab">
+                Pontos
+            </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    id="tab-relatorio"
+                    data-bs-toggle="tab"
+                    data-bs-target="#relatorio"
+                    type="button"
+                    role="tab">
+                Relatório Mensal
+            </button>
+        </li>
+    </ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade" id="relatorio" role="tabpanel">
+        <div class="container">
+
+        <div class="card p-4">
+            <h4 class="mb-3">Solicitar Relatório Mensal</h4>
+
+            <form method="get" action="relatorio_mensal.php">
+
+                <input type="hidden" name="obra_token" value="<?= htmlspecialchars($obraToken) ?>">
+
+                <!-- Mês -->
+                <div class="mb-3">
+                    <label class="form-label">Mês</label>
+                    <input type="month"
+                        name="mes"
+                        value="<?= htmlspecialchars($mes) ?>"
+                        class="form-control"
+                        required>
+                </div>
+
+                <!-- Funcionário -->
+                <div class="mb-3">
+                    <label class="form-label">Funcionário</label>
+                    <select name="funcionario_id" class="form-select">
+                        <option value="">Todos os funcionários</option>
+
+                        <?php
+                        $stmt = $conn->prepare('
+                            SELECT DISTINCT f.id, f.name
+                            FROM funcionarios f
+                            JOIN pontos p ON p.funcionario_id = f.id
+                            WHERE p.obra_id = :obra
+                            ORDER BY f.name
+                        ');
+                        $stmt->execute([':obra' => $obra['token']]);
+                        $funcs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        ?>
+
+                        <?php foreach ($funcs as $f): ?>
+                            <option value="<?= $f['id'] ?>">
+                                <?= htmlspecialchars($f['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Botão -->
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-file-earmark-text"></i>
+                    Gerar Relatório
+                </button>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="tab-pane fade show active" id="pontos" role="tabpanel">
+
 <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>Obra: <?= htmlspecialchars($obra['name'], ENT_QUOTES, 'UTF-8') ?></h3>
@@ -360,7 +455,7 @@ foreach ($funcRows as $r) {
     </div>
 <?php endforeach; ?>
 
-
+</div>
 </div>
 <!-- Modal Editar -->
 <div class="modal fade" id="editModal" tabindex="-1">

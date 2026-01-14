@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/styles.css">
+
     <title>Login</title>
     <style>
         .login-container{
@@ -65,6 +66,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             text-align: center;
             margin-bottom: 15px;
         }
+        .login-container a{
+            width: 100%;
+            padding: 10px 0;
+            background-color: #2857a7;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            display:flex;
+            justify-content: center;
+            text-decoration: none;
+        }
+         .login-container a:hover{
+            background-color: #283fa7ee;
+        }
         .login-container form{
             display: flex;
             flex-direction: column;
@@ -84,8 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="text" name="username" placeholder="Username" required>
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
-            or 
-            <a href="funcionarioLogin.php" style="margin-top: 10px; text-align: center; display: block; color: #007bff; text-decoration: none;">Login Funcionário</a>
+            <div style="text-align: center; margin: 10px 0;">or</div>
+            <a href="funcionarioLogin.php">Login Funcionário</a>
         </form>
     </div>
 </body>
